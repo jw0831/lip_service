@@ -484,6 +484,171 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Department Detail Dialog */}
+        <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-2">
+                <Building2 className="h-5 w-5" />
+                <span>{selectedDepartment} 상세 현황</span>
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedDepartment && (
+              <div className="space-y-6">
+                {/* 요약 통계 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-blue-600">
+                          {selectedDepartmentRegulations.length}
+                        </p>
+                        <p className="text-sm text-slate-600">총 관리 법규</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-orange-600">
+                          {currentMonthRegulations.length}
+                        </p>
+                        <p className="text-sm text-slate-600">{currentMonth}월 시행 예정</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-green-600">
+                          {yearlyUpcomingRegulations.length}
+                        </p>
+                        <p className="text-sm text-slate-600">2025년 연간 예정</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* 현재 월 시행 예정 법규 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Calendar className="h-4 w-4" />
+                      <span>{currentMonth}월 시행 예정 법규</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {currentMonthRegulations.length > 0 ? (
+                      <div className="space-y-3">
+                        {currentMonthRegulations.map((regulation, index) => (
+                          <div key={index} className="border border-slate-200 rounded-lg p-4">
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="font-medium text-slate-900 flex-1">
+                                {regulation.법률명}
+                              </h4>
+                              <Badge variant="outline" className="ml-2">
+                                {regulation.법령종류}
+                              </Badge>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-slate-600">시행일자: </span>
+                                <span className="font-medium">{regulation.시행일자}</span>
+                              </div>
+                              <div>
+                                <span className="text-slate-600">구분: </span>
+                                <span className="font-medium">{regulation['제정·개정구분']}</span>
+                              </div>
+                            </div>
+
+                            {regulation['AI 주요 개정 정리'] && 
+                             regulation['AI 주요 개정 정리'] !== '- [개정이유]: 없음\n\n- [주요내용]: 없음' && (
+                              <div className="mt-3 p-3 bg-blue-50 rounded">
+                                <p className="text-sm font-medium text-blue-900 mb-1">AI 주요 개정 정리</p>
+                                <p className="text-sm text-blue-800 whitespace-pre-line">
+                                  {regulation['AI 주요 개정 정리']}
+                                </p>
+                              </div>
+                            )}
+
+                            {regulation['AI 후속 조치 사항'] && 
+                             regulation['AI 후속 조치 사항'] !== '내용/조치사항 없음' && (
+                              <div className="mt-3 p-3 bg-green-50 rounded">
+                                <p className="text-sm font-medium text-green-900 mb-1">AI 후속 조치 사항</p>
+                                <p className="text-sm text-green-800 whitespace-pre-line">
+                                  {regulation['AI 후속 조치 사항']}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-slate-500">
+                        {currentMonth}월에 시행 예정인 법규가 없습니다.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* 2025년 연간 시행 예정 법규 */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <BarChart3 className="h-4 w-4" />
+                      <span>2025년 연간 시행 예정 법규</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {yearlyUpcomingRegulations.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-slate-200">
+                              <th className="text-left text-sm font-medium text-slate-600 pb-3">법률명</th>
+                              <th className="text-left text-sm font-medium text-slate-600 pb-3">법령종류</th>
+                              <th className="text-left text-sm font-medium text-slate-600 pb-3">시행일자</th>
+                              <th className="text-left text-sm font-medium text-slate-600 pb-3">구분</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {yearlyUpcomingRegulations.map((regulation, index) => (
+                              <tr key={index} className="hover:bg-slate-50">
+                                <td className="py-3 text-sm font-medium text-slate-900">
+                                  {regulation.법률명}
+                                </td>
+                                <td className="py-3 text-sm text-slate-600">
+                                  {regulation.법령종류}
+                                </td>
+                                <td className="py-3 text-sm text-slate-600">
+                                  {regulation.시행일자}
+                                </td>
+                                <td className="py-3">
+                                  <Badge variant={regulation['제정·개정구분'] === '일부개정' ? 'default' : 'outline'} className="text-xs">
+                                    {regulation['제정·개정구분']}
+                                  </Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-slate-500">
+                        2025년에 시행 예정인 법규가 없습니다.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

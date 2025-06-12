@@ -1,0 +1,80 @@
+
+========================================
+EMAIL ERROR LOG - 2025-06-12T17:08:54.336Z
+========================================
+Context: Gmail credentials validation
+Error Code: UNKNOWN
+Error Message: Gmail credentials validation failed
+Email To: jw0831@gmail.com
+Email Subject: 🚨 긴급 [고위험] 인사문화그룹 법규 준수 알림: 장애인차별금지 및 권리구제 등에 관한 법률
+Gmail User: NOT_SET
+Gmail Pass Length: 0
+Stack Trace:
+Error: Gmail credentials validation failed
+    at sendEmail (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/server/email.ts:200:23)
+    at <anonymous> (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/server/routes.ts:233:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+========================================
+
+
+========================================
+EMAIL ERROR LOG - 2025-06-12T17:09:31.693Z
+========================================
+Context: Gmail credentials validation
+Error Code: UNKNOWN
+Error Message: Gmail credentials validation failed
+Email To: jw0831@gmail.com
+Email Subject: 🧪 ComplianceGuard 테스트 이메일
+Gmail User: NOT_SET
+Gmail Pass Length: 0
+Stack Trace:
+Error: Gmail credentials validation failed
+    at sendEmail (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/server/email.ts:200:23)
+    at <anonymous> (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/server/routes.ts:351:29)
+    at Layer.handle [as handle_request] (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/layer.js:95:5)
+    at /Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/index.js:346:12)
+    at next (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/index.js:280:10)
+    at <anonymous> (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/server/index.ts:36:3)
+    at Layer.handle [as handle_request] (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/index.js:328:13)
+    at /Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/index.js:346:12)
+    at next (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/index.js:280:10)
+    at urlencodedParser (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/body-parser/lib/types/urlencoded.js:85:7)
+    at Layer.handle [as handle_request] (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/index.js:328:13)
+    at /Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/index.js:346:12)
+    at next (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/express/lib/router/index.js:280:10)
+    at /Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/body-parser/lib/read.js:137:5
+    at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
+    at invokeCallback (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/raw-body/index.js:238:16)
+    at done (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/raw-body/index.js:227:7)
+    at IncomingMessage.onEnd (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/node_modules/raw-body/index.js:287:7)
+    at IncomingMessage.emit (node:events:518:28)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+========================================
+
+
+========================================
+EMAIL ERROR LOG - 2025-06-12T17:09:39.253Z
+========================================
+Context: Gmail credentials validation
+Error Code: UNKNOWN
+Error Message: Gmail credentials validation failed
+Email To: jw0831@gmail.com
+Email Subject: 🚨 긴급 [고위험] 인사문화그룹 법규 준수 알림: 장애인차별금지 및 권리구제 등에 관한 법률
+Gmail User: NOT_SET
+Gmail Pass Length: 0
+Stack Trace:
+Error: Gmail credentials validation failed
+    at sendEmail (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/server/email.ts:200:23)
+    at <anonymous> (/Users/jaden/code_collec/wxzerothon/lip_service/LearnKoreanQuest/server/routes.ts:233:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+========================================
+

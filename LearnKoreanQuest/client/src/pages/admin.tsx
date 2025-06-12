@@ -385,80 +385,8 @@ export default function Admin() {
       </header>
 
       <div className="p-6">
-        {/* System Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm font-medium">총 법규</p>
-                  <p className="text-2xl font-bold text-blue-600 mt-1">
-                    {adminStats.totalRegulations}
-                  </p>
-                </div>
-                <FileText className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm font-medium">관리 부서</p>
-                  <p className="text-2xl font-bold text-green-600 mt-1">
-                    {adminStats.departments}
-                  </p>
-                </div>
-                <Building2 className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm font-medium">AI 분석 완료</p>
-                  <p className="text-2xl font-bold text-purple-600 mt-1">
-                    {adminStats.analyzedRegulations}
-                  </p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm font-medium">검토 대기</p>
-                  <p className="text-2xl font-bold text-yellow-600 mt-1">
-                    {adminStats.pendingReviews}
-                  </p>
-                </div>
-                <AlertTriangle className="h-8 w-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm font-medium">시행 예정</p>
-                  <p className="text-2xl font-bold text-red-600 mt-1">
-                    {adminStats.upcomingRegulations}
-                  </p>
-                </div>
-                <BarChart3 className="h-8 w-8 text-red-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Email Test */}
           <Card>
             <CardHeader>
@@ -726,55 +654,6 @@ export default function Admin() {
                   AI 분석을 통해 법규 준수 보고서를 생성하고 Gmail로 전송합니다.
                 </p>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Smart Analysis */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Bot className="h-5 w-5 mr-2" />
-                스마트 분석 도구
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-amber-50 rounded-lg">
-                <h4 className="font-medium text-slate-900 mb-2">일괄 분석 실행</h4>
-                <p className="text-sm text-slate-600 mb-3">
-                  모든 부서의 미분석 법규에 대해 AI 기반 준수성 분석을 일괄 실행합니다.
-                </p>
-                <div className="text-sm text-slate-600">
-                  예상 소요 시간: 약 20-30분
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">데이터 관리</h4>
-                <div className="space-y-2">
-                  <Button onClick={handleSync} disabled={syncInProgress} variant="outline" className="w-full">
-                    <RefreshCw className={`h-4 w-4 mr-2 ${syncInProgress ? 'animate-spin' : ''}`} />
-                    데이터 새로고침
-                  </Button>
-                  <Button onClick={exportData} variant="outline" className="w-full">
-                    <Download className="h-4 w-4 mr-2" />
-                    데이터 내보내기
-                  </Button>
-                </div>
-              </div>
-              
-              <Button 
-                onClick={handleAnalysis} 
-                disabled={analysisInProgress}
-                className="w-full" 
-                variant="outline"
-              >
-                <Bot className="h-4 w-4 mr-2" />
-                {analysisInProgress ? "분석 중..." : "스마트 분석 일괄 실행"}
-              </Button>
-              
-              <p className="text-xs text-slate-500 text-center">
-                AI 분석은 OpenAI GPT-4o 모델을 사용합니다.
-              </p>
             </CardContent>
           </Card>
 

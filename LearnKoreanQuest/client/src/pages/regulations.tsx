@@ -82,15 +82,13 @@ export default function Regulations() {
     total: regulations.length,
     법률: regulations.filter(r => r.법령종류 === "법률").length,
     대통령령: regulations.filter(r => r.법령종류 === "대통령령").length,
-    부령: regulations.filter(r => r.법령종류 === "부령").length,
-    upcoming: regulations.filter(r => {
-      if (!r.시행일자 || r.시행일자 === 'None') return false;
-      const effectiveDate = new Date(r.시행일자);
-      const now = new Date();
-      const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-      return effectiveDate > now && effectiveDate <= thirtyDaysFromNow;
-    }).length,
-  } : { total: 0, 법률: 0, 대통령령: 0, 부령: 0, upcoming: 0 };
+    시행규칙: regulations.filter(r => 
+      r.법령종류?.includes("규칙") || 
+      r.법령종류?.includes("시행규칙") || 
+      r.법률명?.includes("시행규칙") ||
+      r.법률명?.endsWith("규칙")
+    ).length,
+  } : { total: 0, 법률: 0, 대통령령: 0, 시행규칙: 0 };
 
   const formatKoreanDate = (dateStr: string) => {
     if (!dateStr || dateStr === 'None') return '-';
@@ -112,7 +110,7 @@ export default function Regulations() {
 
       <div className="p-6">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -159,26 +157,12 @@ export default function Regulations() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-600 text-sm font-medium">부령</p>
+                  <p className="text-slate-600 text-sm font-medium">시행규칙</p>
                   <p className="text-2xl font-bold text-purple-600 mt-1">
-                    {stats.부령}
+                    {stats.시행규칙}
                   </p>
                 </div>
                 <FileText className="h-8 w-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-600 text-sm font-medium">시행 예정</p>
-                  <p className="text-2xl font-bold text-red-600 mt-1">
-                    {stats.upcoming}
-                  </p>
-                </div>
-                <Calendar className="h-8 w-8 text-red-600" />
               </div>
             </CardContent>
           </Card>

@@ -169,18 +169,18 @@ export default function Admin() {
     },
   });
 
-  const gmailTestMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/admin/test-gmail"),
+  const sendgridTestMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/admin/test-email-service"),
     onSuccess: () => {
       toast({
-        title: "Gmail 테스트 성공",
-        description: "Gmail SMTP 연결이 성공했습니다.",
+        title: "이메일 테스트 성공",
+        description: "이메일 서비스 연결이 성공했습니다.",
       });
     },
     onError: () => {
       toast({
-        title: "Gmail 테스트 실패",
-        description: "Gmail SMTP 연결에 실패했습니다. 설정을 확인해주세요.",
+        title: "이메일 테스트 실패",
+        description: "이메일 서비스 연결에 실패했습니다. 설정을 확인해주세요.",
         variant: "destructive",
       });
     },
@@ -218,6 +218,23 @@ export default function Admin() {
       toast({
         title: "로그 삭제 실패",
         description: "로그 삭제 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const monthlyUpcomingEmailTestMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/admin/test-monthly-upcoming-email"),
+    onSuccess: () => {
+      toast({
+        title: "월간 시행 예정 법규 이메일 테스트 완료",
+        description: "모든 부서에 시행 예정 법규 이메일이 발송되었습니다.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "월간 시행 예정 법규 이메일 테스트 실패",
+        description: "이메일 발송 중 오류가 발생했습니다.",
         variant: "destructive",
       });
     },
@@ -399,25 +416,25 @@ export default function Admin() {
               <div className="p-4 bg-green-50 rounded-lg">
                 <h4 className="font-medium text-slate-900 mb-2">이메일 서비스 상태</h4>
                 <p className="text-sm text-slate-600 mb-3">
-                  SendGrid를 통한 이메일 발송 서비스가 정상적으로 작동하고 있습니다.
+                  Gmail SMTP 및 SendGrid API 하이브리드 이메일 발송 서비스가 대기 중입니다.
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-600">
                     발송 대기열: 0건
                   </span>
-                  <Badge className="bg-green-100 text-green-800">정상</Badge>
+                  <Badge className="bg-green-100 text-green-800">대기</Badge>
                 </div>
               </div>
               
               <div className="space-y-2">
                 <Button 
-                  onClick={() => gmailTestMutation.mutate()}
-                  disabled={gmailTestMutation.isPending}
+                  onClick={() => sendgridTestMutation.mutate()}
+                  disabled={sendgridTestMutation.isPending}
                   className="w-full" 
                   variant="secondary"
                 >
                   <Settings className="h-4 w-4 mr-2" />
-                  {gmailTestMutation.isPending ? "테스트 중..." : "Gmail 연결 테스트"}
+                  {sendgridTestMutation.isPending ? "테스트 중..." : "이메일 서비스 연결 테스트"}
                 </Button>
                 
                 <Button 
@@ -541,6 +558,15 @@ export default function Admin() {
                   {monthlyAnalysisMutation.isPending ? "분석 중..." : "월간 분석 수동 실행"}
                 </Button>
 
+                <Button 
+                  onClick={() => monthlyUpcomingEmailTestMutation.mutate()}
+                  disabled={monthlyUpcomingEmailTestMutation.isPending}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  {monthlyUpcomingEmailTestMutation.isPending ? "발송 중..." : "월간 시행 예정 법규 이메일 테스트"}
+                </Button>
+
                 <Dialog open={isComplianceEmailDialogOpen} onOpenChange={setIsComplianceEmailDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="w-full bg-blue-600 hover:bg-blue-700">
@@ -651,7 +677,7 @@ export default function Admin() {
                 </Dialog>
                 
                 <p className="text-xs text-slate-500 text-center">
-                  AI 분석을 통해 법규 준수 보고서를 생성하고 Gmail로 전송합니다.
+                  AI 분석을 통해 법규 준수 보고서를 생성하고 하이브리드 이메일 서비스로 전송합니다.
                 </p>
               </div>
             </CardContent>

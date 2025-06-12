@@ -343,6 +343,27 @@ ${targetRegulation?.['AI 후속 조치 사항'] || '후속 조치사항이 분�
     }
   });
 
+  app.post("/api/admin/test-monthly-upcoming-email", async (req, res) => {
+    try {
+      console.log("🧪 월간 시행 예정 법규 이메일 테스트 시작...");
+      
+      const { sendMonthlyUpcomingRegulations } = await import('./scheduler');
+      await sendMonthlyUpcomingRegulations();
+      
+      res.json({ 
+        success: true,
+        message: "월간 시행 예정 법규 이메일 테스트가 완료되었습니다." 
+      });
+    } catch (error) {
+      console.error("월간 시행 예정 법규 이메일 테스트 실패:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "월간 시행 예정 법규 이메일 테스트 중 오류가 발생했습니다.",
+        error: error instanceof Error ? error.message : "알 수 없는 오류"
+      });
+    }
+  });
+
   app.post("/api/admin/test-email", async (req, res) => {
     try {
       const { email, subject, message } = req.body;
@@ -382,37 +403,45 @@ ${targetRegulation?.['AI 후속 조치 사항'] || '후속 조치사항이 분�
     }
   });
 
-  // Gmail 연결 테스트 엔드포인트
-  app.post("/api/admin/test-gmail", async (req, res) => {
+  // 이메일 서비스 테스트 엔드포인트 (Gmail 우선, SendGrid 대체)
+  app.post("/api/admin/test-email-service", async (req, res) => {
     try {
-      console.log('🔧 Gmail 연결 테스트 시작...');
+      console.log('🔧 이메일 서비스 연결 테스트 시작...');
       
       const { sendEmail } = await import('./email');
+      const testEmail = process.env.GMAIL_USER || process.env.SENDGRID_FROM_EMAIL || "test@example.com";
+      
       const success = await sendEmail({
-        to: process.env.GMAIL_USER || "test@example.com",
-        from: process.env.GMAIL_USER || "",
-        subject: "🧪 Gmail 연결 테스트",
+        to: testEmail,
+        from: testEmail,
+        subject: "🧪 이메일 서비스 연결 테스트",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #16a34a;">✅ Gmail SMTP 연결 테스트 성공!</h2>
-            <p>이 이메일이 수신되었다면 Gmail 설정이 올바르게 구성되었습니다.</p>
+            <h2 style="color: #16a34a;">✅ 이메일 서비스 연결 테스트 성공!</h2>
+            <p>이 이메일이 수신되었다면 이메일 설정이 올바르게 구성되었습니다.</p>
             <p><strong>테스트 시간:</strong> ${new Date().toLocaleString('ko-KR')}</p>
-            <p><strong>발신자:</strong> ${process.env.GMAIL_USER}</p>
+            <p><strong>사용된 서비스:</strong> ${process.env.GMAIL_USER ? 'Gmail SMTP' : 'SendGrid API'}</p>
+            <p><strong>발신자:</strong> ${testEmail}</p>
             <hr>
-            <small>ComplianceGuard - Gmail 연결 테스트</small>
+            <small>ComplianceGuard - 이메일 서비스 연결 테스트</small>
           </div>
         `
       });
       
+      const serviceName = process.env.GMAIL_USER ? 'Gmail SMTP' : process.env.SENDGRID_API_KEY ? 'SendGrid API' : '데모 모드';
+      
       res.json({ 
         success, 
-        message: success ? "Gmail SMTP 연결 및 테스트 이메일 전송이 성공했습니다." : "Gmail SMTP 연결에 실패했습니다."
+        message: success 
+          ? `${serviceName} 연결 및 테스트 이메일 전송이 성공했습니다.` 
+          : `${serviceName} 연결에 실패했습니다.`,
+        service: serviceName
       });
     } catch (error) {
-      console.error("Gmail 연결 테스트 오류:", error);
+      console.error("이메일 서비스 테스트 오류:", error);
       res.status(500).json({ 
         success: false, 
-        message: "Gmail 연결 테스트 중 오류가 발생했습니다." 
+        message: "이메일 서비스 테스트 중 오류가 발생했습니다." 
       });
     }
   });

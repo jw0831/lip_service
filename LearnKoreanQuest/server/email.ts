@@ -1,3 +1,4 @@
+import sgMail from "@sendgrid/mail";
 import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
@@ -20,7 +21,9 @@ const logEmailError = (error: any, context: string, params?: any) => {
     } : null,
     environment: {
       GMAIL_USER: process.env.GMAIL_USER ? 'SET' : 'NOT_SET',
-      GMAIL_PASS_LENGTH: process.env.GMAIL_PASS ? process.env.GMAIL_PASS.replace(/\s+/g, '').length : 0
+      GMAIL_PASS: process.env.GMAIL_PASS ? 'SET' : 'NOT_SET',
+      SENDGRID_API_KEY: process.env.SENDGRID_API_KEY ? 'SET' : 'NOT_SET',
+      SENDGRID_FROM_EMAIL: process.env.SENDGRID_FROM_EMAIL ? 'SET' : 'NOT_SET'
     }
   };
   
@@ -34,7 +37,9 @@ Error Message: ${error.message || 'No message'}
 Email To: ${params?.to || 'N/A'}
 Email Subject: ${params?.subject || 'N/A'}
 Gmail User: ${process.env.GMAIL_USER ? 'SET' : 'NOT_SET'}
-Gmail Pass Length: ${process.env.GMAIL_PASS ? process.env.GMAIL_PASS.replace(/\s+/g, '').length : 0}
+Gmail Pass: ${process.env.GMAIL_PASS ? 'SET' : 'NOT_SET'}
+SendGrid API Key: ${process.env.SENDGRID_API_KEY ? 'SET' : 'NOT_SET'}
+SendGrid From Email: ${process.env.SENDGRID_FROM_EMAIL ? 'SET' : 'NOT_SET'}
 Stack Trace:
 ${error.stack || 'No stack trace'}
 ========================================
@@ -61,7 +66,7 @@ Context: Email sent successfully
 Email To: ${params.to}
 Email Subject: ${params.subject}
 Message ID: ${messageId || 'N/A'}
-Gmail User: ${process.env.GMAIL_USER}
+Service Used: ${process.env.GMAIL_USER ? 'Gmail' : 'SendGrid'}
 ========================================
 
 `;
@@ -78,7 +83,7 @@ Gmail User: ${process.env.GMAIL_USER}
 // Validate Gmail credentials format
 const isValidGmailCredentials = (): boolean => {
   const user = process.env.GMAIL_USER?.trim();
-  const pass = (process.env.GMAIL_PASS || process.env.GMAIL_APP_PASSWORD)?.replace(/\s+/g, '');
+  const pass = process.env.GMAIL_PASS?.replace(/\s+/g, '');
   
   if (!user || !pass) return false;
   
@@ -86,33 +91,60 @@ const isValidGmailCredentials = (): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(user)) return false;
   
-  // For Gmail app password, it should be 16 characters, but we'll be more flexible
+  // Check if password is at least 8 characters
   if (pass.length < 8) return false;
   
   return true;
 };
 
-// Configure Gmail SMTP transporter
-const createTransporter = () => {
+// Validate SendGrid credentials format
+const isValidSendGridCredentials = (): boolean => {
+  const apiKey = process.env.SENDGRID_API_KEY?.trim();
+  const fromEmail = process.env.SENDGRID_FROM_EMAIL?.trim();
+  
+  if (!apiKey || !fromEmail) return false;
+  
+  // Check if fromEmail is a valid email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(fromEmail)) return false;
+  
+  // Check if API key starts with 'SG.'
+  if (!apiKey.startsWith('SG.')) return false;
+  
+  return true;
+};
+
+// Determine which email service to use (prioritize Gmail for local development)
+const getEmailService = (): 'gmail' | 'sendgrid' | 'demo' => {
+  if (isValidGmailCredentials()) {
+    return 'gmail';
+  } else if (isValidSendGridCredentials()) {
+    return 'sendgrid';
+  } else {
+    return 'demo';
+  }
+};
+
+// Create Gmail transporter
+const createGmailTransporter = () => {
   const user = process.env.GMAIL_USER?.trim();
-  const pass = (process.env.GMAIL_PASS || process.env.GMAIL_APP_PASSWORD)?.replace(/\s+/g, '');
+  const pass = process.env.GMAIL_PASS?.replace(/\s+/g, '');
   
-  console.log('🔧 Transporter 설정:');
-  console.log(`User: ${user}`);
-  console.log(`Pass length: ${pass?.length}`);
-  console.log(`Pass (masked): ${pass?.substring(0, 4)}****${pass?.substring(pass.length - 4)}`);
-  
-  return nodemailer.createTransport({
+  return nodemailer.createTransporter({
     service: 'gmail',
-    port: 587,
-    secure: false, // true for 465, false for other ports
     auth: {
       user: user,
       pass: pass,
     },
-    debug: true, // Enable debug mode
-    logger: true // Enable logging
   });
+};
+
+// Initialize SendGrid
+const initializeSendGrid = () => {
+  const apiKey = process.env.SENDGRID_API_KEY?.trim();
+  if (apiKey) {
+    sgMail.setApiKey(apiKey);
+  }
 };
 
 interface EmailParams {
@@ -151,15 +183,27 @@ interface MonthlyReportData {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  console.log('🔍 Gmail 인증 정보 확인 중...');
-  console.log(`GMAIL_USER: ${process.env.GMAIL_USER ? '설정됨' : '설정안됨'}`);
-  console.log(`GMAIL_PASS: ${process.env.GMAIL_PASS ? `설정됨 (길이: ${process.env.GMAIL_PASS.replace(/\s+/g, '').length})` : '설정안됨'}`);
+  const emailService = getEmailService();
   
-  // 데모 모드: 항상 성공으로 처리하고 콘솔에 출력
+  console.log(`📧 이메일 서비스: ${emailService.toUpperCase()}`);
+  
+  if (emailService === 'demo') {
+    return sendDemoEmail(params);
+  } else if (emailService === 'gmail') {
+    return sendGmailEmail(params);
+  } else if (emailService === 'sendgrid') {
+    return sendSendGridEmail(params);
+  }
+  
+  return false;
+}
+
+// Demo email (console output only)
+async function sendDemoEmail(params: EmailParams): Promise<boolean> {
   console.log("\n" + "=".repeat(120));
-  console.log("📧 이메일 발송 데모 (Gmail 설정 후 실제 발송 가능)");
+  console.log("📧 이메일 전송 데모 - 인증 정보 필요");
   console.log("=".repeat(120));
-  console.log(`발신자: ComplianceGuard System <${process.env.GMAIL_USER}>`);
+  console.log(`발신자: ComplianceGuard System`);
   console.log(`수신자: ${params.to}`);
   console.log(`제목: ${params.subject}`);
   console.log("=".repeat(120));
@@ -175,37 +219,19 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
     console.log(params.text || '내용 없음');
   }
   console.log("=".repeat(120));
-  console.log("✅ 이메일 발송 시뮬레이션 완료");
-  console.log("💡 실제 Gmail 발송을 위해서는:");
-  console.log("1. Google 계정 > 보안 > 2단계 인증 활성화");
-  console.log("2. 앱 비밀번호 생성 > 16자리 앱 비밀번호 복사");
-  console.log("3. .env 파일의 GMAIL_PASS에 앱 비밀번호 설정");
+  console.log("💡 이메일 발송 설정:");
+  console.log("• Gmail: GMAIL_USER, GMAIL_PASS 환경변수 설정");
+  console.log("• SendGrid: SENDGRID_API_KEY, SENDGRID_FROM_EMAIL 환경변수 설정");
   console.log("=".repeat(120));
   
-  // 실제 Gmail 발송 시도 (실패해도 데모 모드로 성공 처리)
-  if (isValidGmailCredentials()) {
-    try {
-      const result = await sendRealEmail(params);
-      if (result) {
-        logEmailSuccess(params, 'gmail-success');
-      }
-      return result;
-    } catch (error) {
-      console.log("❌ 실제 이메일 발송 실패, 데모 모드로 계속 진행");
-      console.log("오류:", error);
-      logEmailError(error, "Real Gmail sending failed", params);
-    }
-  } else {
-    // Gmail 인증 정보가 없는 경우도 로깅
-    const authError = new Error("Gmail credentials validation failed");
-    logEmailError(authError, "Gmail credentials validation", params);
-  }
-  
-  return true; // 데모 모드에서는 항상 성공
+  const authError = new Error("No valid email credentials found");
+  logEmailError(authError, "Email credentials validation", params);
+  return true;
 }
 
-async function sendRealEmail(params: EmailParams): Promise<boolean> {
-  const transporter = createTransporter();
+// Gmail email sending
+async function sendGmailEmail(params: EmailParams): Promise<boolean> {
+  const transporter = createGmailTransporter();
   
   try {
     console.log('📡 Gmail SMTP 연결 테스트 중...');
@@ -220,35 +246,58 @@ async function sendRealEmail(params: EmailParams): Promise<boolean> {
       html: params.html,
     };
 
-    console.log('📤 이메일 발송 시도 중...');
+    console.log('📤 Gmail을 통한 이메일 발송 시도 중...');
     const result = await transporter.sendMail(mailOptions);
-    console.log(`✅ 실제 이메일 전송 성공: ${result.messageId}`);
+    
+    console.log(`✅ Gmail 이메일 전송 성공: ${result.messageId}`);
     console.log(`📧 수신자: ${params.to}`);
     
-    // 성공 로그 기록
     logEmailSuccess(params, result.messageId);
     return true;
   } catch (error: any) {
-    console.error('❌ Gmail 이메일 전송 실패:');
-    console.error('오류 코드:', error.code);
-    console.error('오류 메시지:', error.message);
-    
-    // 오류 로그 기록
+    console.error('❌ Gmail 이메일 전송 실패:', error);
     logEmailError(error, "Gmail SMTP sending failed", params);
-    
-    if (error.code === 'EAUTH') {
-      console.error('🔑 인증 오류: Gmail 앱 비밀번호를 확인하세요');
-      console.error('💡 해결방법:');
-      console.error('1. https://myaccount.google.com/security');
-      console.error('2. 2단계 인증 > 앱 비밀번호 생성');
-      console.error('3. 생성된 16자리 비밀번호를 .env의 GMAIL_PASS에 설정');
-    } else if (error.code === 'ENOTFOUND') {
-      console.error('🌐 네트워크 오류: 인터넷 연결을 확인하세요');
-    }
-    
-    throw error; // 오류를 다시 throw하여 상위에서 처리
+    return false;
   }
 }
+
+// SendGrid email sending
+async function sendSendGridEmail(params: EmailParams): Promise<boolean> {
+  initializeSendGrid();
+  
+  try {
+    const msg = {
+      to: params.to,
+      from: {
+        email: process.env.SENDGRID_FROM_EMAIL!,
+        name: 'ComplianceGuard'
+      },
+      subject: params.subject,
+      text: params.text,
+      html: params.html,
+    };
+
+    console.log('📤 SendGrid를 통한 이메일 발송 시도 중...');
+    const result = await sgMail.send(msg);
+    
+    console.log(`✅ SendGrid 이메일 전송 성공: ${result[0].statusCode}`);
+    console.log(`📧 수신자: ${params.to}`);
+    
+    logEmailSuccess(params, result[0].headers['x-message-id'] || 'sendgrid-success');
+    return true;
+  } catch (error: any) {
+    console.error('❌ SendGrid 이메일 전송 실패:', error);
+    
+    if (error.response) {
+      console.error('SendGrid Response Body:', error.response.body);
+      console.error('SendGrid Status Code:', error.response.statusCode);
+    }
+    
+    logEmailError(error, "SendGrid sending failed", params);
+    return false;
+  }
+}
+
 
 export async function sendUrgentNotification(
   data: DepartmentNotificationData
@@ -274,7 +323,7 @@ export async function sendUrgentNotification(
 
   return await sendEmail({
     to: data.contactEmail,
-    from: process.env.GMAIL_USER || "",
+    from: process.env.GMAIL_USER || process.env.SENDGRID_FROM_EMAIL || "",
     subject,
     html
   });
@@ -315,7 +364,7 @@ export async function sendMonthlyReport(
 
   return await sendEmail({
     to: data.contactEmail,
-    from: process.env.GMAIL_USER || "",
+    from: process.env.GMAIL_USER || process.env.SENDGRID_FROM_EMAIL || "",
     subject,
     html
   });
@@ -343,7 +392,7 @@ export async function sendRegulationReminder(
 
   return await sendEmail({
     to,
-    from: process.env.GMAIL_USER || "",
+    from: process.env.GMAIL_USER || process.env.SENDGRID_FROM_EMAIL || "",
     subject,
     html
   });
@@ -367,7 +416,123 @@ export async function sendSystemNotification(
 
   return await sendEmail({
     to,
-    from: process.env.GMAIL_USER || "",
+    from: process.env.GMAIL_USER || process.env.SENDGRID_FROM_EMAIL || "",
+    subject,
+    html
+  });
+}
+
+export async function sendMonthlyUpcomingRegulationsEmail(
+  departmentName: string,
+  regulations: any[]
+): Promise<boolean> {
+  const currentMonth = new Date().getMonth() + 1;
+  const currentYear = new Date().getFullYear();
+  
+  const subject = `📋 ${departmentName} ${currentMonth}월 시행 예정 법규 안내`;
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; line-height: 1.6;">
+      <div style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 24px;">📋 ${departmentName}</h1>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">${currentMonth}월 시행 예정 법규 안내 | 총 ${regulations.length}건</p>
+      </div>
+      
+      <div style="background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
+        <div style="background: #dbeafe; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">
+          <h2 style="margin: 0 0 10px 0; color: #1e40af; font-size: 18px;">📊 ${currentMonth}월 시행 예정 법규 현황</h2>
+          <div style="color: #1e40af;">
+            <p style="margin: 5px 0;"><strong>총 법규:</strong> ${regulations.length}건</p>
+            <p style="margin: 5px 0;"><strong>담당부서:</strong> ${departmentName}</p>
+            <p style="margin: 5px 0;"><strong>발송일:</strong> ${new Date().toLocaleDateString('ko-KR')}</p>
+          </div>
+        </div>
+        
+        <h2 style="color: #374151; margin-bottom: 20px;">📋 시행 예정 법규 상세 내용</h2>
+        
+        ${regulations.map((regulation, index) => `
+          <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 15px; background: #f9fafb;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+              <h3 style="margin: 0; color: #111827; font-size: 16px; flex: 1;">
+                ${regulation.법률명}
+              </h3>
+              <span style="background: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px;">
+                ${regulation.법령종류}
+              </span>
+            </div>
+            
+            <div style="grid-template-columns: 1fr 1fr; display: grid; gap: 15px; margin-bottom: 15px; font-size: 14px;">
+              <div>
+                <span style="color: #6b7280; font-weight: 500;">시행일자:</span>
+                <span style="font-weight: 600; margin-left: 8px;">${regulation.시행일자}</span>
+              </div>
+              <div>
+                <span style="color: #6b7280; font-weight: 500;">구분:</span>
+                <span style="font-weight: 600; margin-left: 8px;">${regulation['제정·개정구분'] || '-'}</span>
+              </div>
+              ${regulation['개정 법률 조항'] ? `
+              <div style="grid-column: 1 / -1;">
+                <span style="color: #6b7280; font-weight: 500;">개정 법률 조항:</span>
+                <span style="font-weight: 600; margin-left: 8px; color: #dc2626;">${regulation['개정 법률 조항']}</span>
+              </div>
+              ` : ''}
+            </div>
+
+            ${regulation['AI 주요 개정 정리'] && 
+             regulation['AI 주요 개정 정리'] !== '- [개정이유]: 없음\\n\\n- [주요내용]: 없음' ? `
+              <div style="background: #dbeafe; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e40af;">💡 AI 주요 개정 정리</p>
+                <div style="color: #1e40af; white-space: pre-line; font-size: 14px;">
+                  ${regulation['AI 주요 개정 정리']}
+                </div>
+              </div>
+            ` : ''}
+
+            ${regulation['AI 후속 조치 사항'] && 
+             regulation['AI 후속 조치 사항'] !== '내용/조치사항 없음' ? `
+              <div style="background: #dcfce7; padding: 15px; border-radius: 6px;">
+                <p style="margin: 0 0 8px 0; font-weight: 600; color: #15803d;">📋 AI 후속 조치 사항</p>
+                <div style="color: #15803d; white-space: pre-line; font-size: 14px;">
+                  ${regulation['AI 후속 조치 사항']}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `).join('')}
+        
+        <div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <h3 style="margin: 0 0 15px 0; color: #374151;">📞 문의 및 지원</h3>
+          <p style="margin: 0; color: #6b7280; font-size: 14px;">
+            • 상세한 법규 내용은 ComplianceGuard 시스템에서 확인 가능합니다<br>
+            • 법규 준수 관련 문의: 법무팀 (${process.env.GMAIL_USER || process.env.SENDGRID_FROM_EMAIL})<br>
+            • 긴급한 사안의 경우 즉시 연락 바랍니다
+          </p>
+        </div>
+      </div>
+      
+      <div style="background: #374151; color: white; padding: 15px; text-align: center; border-radius: 0 0 8px 8px;">
+        <small>ComplianceGuard - AI 기반 법규 준수 모니터링 플랫폼 | 발송시간: ${new Date().toLocaleString('ko-KR')}</small>
+      </div>
+    </div>
+  `;
+
+  // 부서별 담당자 이메일 매핑 (실제 환경에서는 데이터베이스에서 가져와야 함)
+  const departmentEmails: Record<string, string> = {
+    "인사문화그룹": "hr@company.com",
+    "환경기획그룹": "env@company.com", 
+    "안전보건기획그룹": "safety@company.com",
+    "정보보호사무국": "security@company.com",
+    "회계세무그룹": "finance@company.com",
+    "법무실": "legal@company.com",
+    "노사협력그룹": "labor@company.com",
+    "윤리경영사무국": "ethics@company.com",
+  };
+
+  const recipientEmail = departmentEmails[departmentName] || "admin@company.com";
+
+  return await sendEmail({
+    to: recipientEmail,
+    from: process.env.GMAIL_USER || process.env.SENDGRID_FROM_EMAIL || "",
     subject,
     html
   });

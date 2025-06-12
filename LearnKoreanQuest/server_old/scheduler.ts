@@ -1,6 +1,5 @@
 import { scheduledLawSync } from "./law-sync";
 import { scheduledMonthlyAnalysis } from "./monthly-analysis";
-import { sendMonthlyUpcomingRegulationsEmail } from "./email";
 
 let intervalIds: NodeJS.Timeout[] = [];
 
@@ -33,11 +32,6 @@ export function startSchedulers() {
       scheduledMonthlyAnalysis().catch(error => {
         console.error("정기 월간 분석 스케줄러 오류:", error);
       });
-      
-      // 매월 1일 시행 예정 법규 이메일 발송
-      sendMonthlyUpcomingRegulations().catch(error => {
-        console.error("월간 시행 예정 법규 이메일 발송 오류:", error);
-      });
     }
   }, 60000); // 1분마다 체크
   
@@ -53,7 +47,6 @@ export function startSchedulers() {
   console.log("스케줄러 설정 완료:");
   console.log("- 일일 법규 동기화: 비활성화됨");
   console.log("- 월간 분석: 매월 1일 오전 9시");
-  console.log("- 월간 시행 예정 법규 이메일: 매월 1일 오전 9시");
   console.log("- 알림 체크: 5분마다");
 }
 
@@ -65,31 +58,44 @@ export function stopSchedulers() {
 
 async function checkUpcomingRegulations() {
   try {
-    const { ExcelService } = await import("./excelService");
-    const excelService = ExcelService.getInstance();
-    const regulations = await excelService.getAllRegulations();
+    const { storage } = await import("./storage");
+    const regulations = await storage.getAllRegulations();
     const now = new Date();
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     
     for (const regulation of regulations) {
-      if (!regulation.시행일자 || regulation.시행일자 === 'None') continue;
+      if (!regulation.effectiveDate) continue;
       
-      const effectiveDate = new Date(regulation.시행일자);
+      const effectiveDate = new Date(regulation.effectiveDate);
       const timeDiff = effectiveDate.getTime() - now.getTime();
       const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
       
       // 7일 전 알림
       if (daysDiff === 7) {
-        console.log(`7일 전 알림: ${regulation.법률명}`);
+        await storage.createNotification({
+          type: "알림",
+          title: `법규 시행 예정: ${regulation.name}`,
+          message: `${regulation.name}이(가) 7일 후 시행됩니다. 준비사항을 점검해주세요.`,
+        });
       }
       
       // 1일 전 긴급 알림
       if (daysDiff === 1) {
-        console.log(`1일 전 긴급 알림: ${regulation.법률명}`);
+        await storage.createNotification({
+          type: "긴급",
+          title: `법규 시행 임박: ${regulation.name}`,
+          message: `${regulation.name}이(가) 내일 시행됩니다. 최종 점검이 필요합니다.`,
+        });
       }
       
       // 시행일 당일 알림
       if (daysDiff === 0) {
-        console.log(`시행일 당일 알림: ${regulation.법률명}`);
+        await storage.createNotification({
+          type: "시행",
+          title: `법규 시행: ${regulation.name}`,
+          message: `${regulation.name}이(가) 오늘부터 시행됩니다.`,
+        });
       }
     }
     
@@ -107,44 +113,6 @@ export async function runImmediateLawSync() {
 export async function runImmediateMonthlyAnalysis() {
   console.log("즉시 월간 분석 실행...");
   return scheduledMonthlyAnalysis();
-}
-
-export async function sendMonthlyUpcomingRegulations() {
-  try {
-    console.log("월간 시행 예정 법규 이메일 발송 시작...");
-    
-    const { ExcelService } = await import("./excelService");
-    const excelService = ExcelService.getInstance();
-    const regulations = await excelService.getAllRegulations();
-    
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-    const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    
-    // 한달 이내 시행 예정 법규 필터링
-    const upcomingRegulations = regulations.filter(r => {
-      if (!r.시행일자 || r.시행일자 === 'None') return false;
-      const effectiveDate = new Date(r.시행일자);
-      return effectiveDate > now && effectiveDate <= nextMonth;
-    });
-    
-    // 부서별로 그룹화
-    const departmentGroups = Array.from(new Set(upcomingRegulations.map(r => r.담당부서).filter(d => d && d !== 'None')));
-    
-    for (const deptName of departmentGroups) {
-      const deptRegulations = upcomingRegulations.filter(r => r.담당부서 === deptName);
-      
-      if (deptRegulations.length > 0) {
-        await sendMonthlyUpcomingRegulationsEmail(deptName, deptRegulations);
-      }
-    }
-    
-    console.log(`월간 시행 예정 법규 이메일 발송 완료: ${departmentGroups.length}개 부서`);
-    
-  } catch (error) {
-    console.error("월간 시행 예정 법규 이메일 발송 실패:", error);
-  }
 }
 
 // 서버 종료 시 정리

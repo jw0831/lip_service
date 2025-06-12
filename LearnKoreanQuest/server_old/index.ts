@@ -1,7 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { startSchedulers } from "./scheduler";
 
 const app = express();
 app.use(express.json());
@@ -67,8 +66,6 @@ app.use((req, res, next) => {
       host: "0.0.0.0",
     }, () => {
       log(`serving on port ${currentPort}`);
-      // 서버 시작 후 스케줄러 실행
-      startSchedulers();
     }).on('error', (err: any) => {
       if (err.code === 'EADDRINUSE') {
         log(`Port ${currentPort} is in use, trying ${currentPort + 1}`);

@@ -172,48 +172,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("🚀 AI 기반 법규 준수 분석 및 이메일 전송 시작...");
       
-      const { analyzeRegulationCompliance, generateComplianceReport } = await import("./openai");
-      const { sendEmail } = await import("./email");
-      
+      const { senderEmail, recipientEmail } = req.body;
       const regulations = await excelService.getAllRegulations();
       const departments = await excelService.getDepartments();
       
-      // Find target regulation from Excel data
+      // Find target regulation with AI analysis from Excel data
       const targetRegulation = regulations.find(reg => 
-        reg.법률명.includes("정보통신망") || reg.법률명.includes("개인정보")
+        reg['AI 후속 조치 사항'] && 
+        reg['AI 후속 조치 사항'] !== '내용/조치사항 없음' &&
+        reg['AI 주요 개정 정리'] && 
+        reg['AI 주요 개정 정리'] !== '- [개정이유]: 없음\n\n- [주요내용]: 없음'
       ) || regulations[0];
 
-      const targetDepartment = departments.find(dept => 
-        dept.includes("정보") || dept.includes("보안")
-      ) || departments[0];
+      const targetDepartment = targetRegulation?.담당부서 || "안전보건기획그룹";
 
       console.log(`📋 분석 대상: ${targetRegulation?.법률명} - ${targetDepartment}`);
 
-      // Simulate AI analysis
-      const analysisResult = {
-        findings: `${targetRegulation?.법률명}에 대한 AI 분석이 완료되었습니다.`,
-        recommendations: `${targetDepartment} 부서에서 추가 검토가 필요합니다.`
-      };
+      // Generate AI compliance email
+      const emailSubject = `🚨 긴급 [고위험] ${targetDepartment} 법규 준수 알림: ${targetRegulation?.법률명}`;
+      
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; line-height: 1.6;">
+          <div style="background: linear-gradient(135deg, #dc2626, #ef4444); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0; font-size: 24px;">🔴 ${targetDepartment} 긴급 알림</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">시행일자: ${targetRegulation?.시행일자} | 위험도: 고위험 | 필수 대응: 즉시 조치 필요</p>
+          </div>
+          
+          <div style="background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
+            <div style="background: #dbeafe; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #3b82f6;">
+              <h2 style="margin: 0 0 10px 0; color: #1e40af; font-size: 18px;">💡 ${targetRegulation?.법률명} - AI 분석 결과</h2>
+              <div style="color: #1e40af; white-space: pre-wrap;">${targetRegulation?.['AI 주요 개정 정리'] || '주요 개정 내용이 분석되었습니다.'}</div>
+            </div>
+            
+            <div style="background: #dcfce7; padding: 20px; border-radius: 8px; border-left: 4px solid #16a34a;">
+              <h2 style="margin: 0 0 15px 0; color: #15803d; font-size: 18px;">📋 ${targetDepartment} 이행 조치사항 (액션 아이템)</h2>
+              <div style="color: #15803d;">
+                <div style="font-weight: bold; margin-bottom: 10px;">🔧 즉시 조치사항 (7일 이내):</div>
+                <div style="white-space: pre-wrap; background: white; padding: 15px; border-radius: 6px; border: 1px solid #bbf7d0;">
+${targetRegulation?.['AI 후속 조치 사항'] || '후속 조치사항이 분석되었습니다.'}
+                </div>
+              </div>
+            </div>
+            
+            <div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <h3 style="margin: 0 0 10px 0; color: #374151;">📞 문의 및 지원</h3>
+              <p style="margin: 0; color: #6b7280;">
+                추가 문의사항이 있으시면 법무팀(${senderEmail})으로 연락해 주세요.<br>
+                긴급한 사안의 경우 즉시 연락 바랍니다.
+              </p>
+            </div>
+          </div>
+          
+          <div style="background: #374151; color: white; padding: 15px; text-align: center; border-radius: 0 0 8px 8px;">
+            <small>ComplianceGuard - AI 기반 법규 준수 모니터링 플랫폼 | 발송시간: ${new Date().toLocaleString('ko-KR')}</small>
+          </div>
+        </div>
+      `;
 
-      console.log("🤖 AI 분석 완료");
+      // Send email
+      const emailSent = await sendEmail({
+        to: recipientEmail,
+        from: senderEmail,
+        subject: emailSubject,
+        html: emailHtml
+      });
 
-      // Simulate email sending
-      const emailSent = true;
-      console.log("📧 이메일 전송: 성공");
+      console.log(`📧 이메일 전송 결과: ${emailSent ? '성공' : '실패'}`);
 
       res.json({
-        success: true,
-        message: "AI 분석 및 이메일 전송이 완료되었습니다.",
+        success: emailSent,
+        message: emailSent ? "AI 분석 및 이메일 전송이 완료되었습니다." : "이메일 전송에 실패했습니다.",
         regulation: targetRegulation?.법률명,
         department: targetDepartment,
-        analysis: analysisResult,
-        emailSent
+        emailSent,
+        recipientEmail
       });
 
     } catch (error) {
       console.error("AI 분석 실패:", error);
       res.status(500).json({ 
-        error: "AI 분석 중 오류가 발생했습니다.",
+        success: false,
+        message: "AI 분석 중 오류가 발생했습니다.",
         details: error instanceof Error ? error.message : "알 수 없는 오류"
       });
     }
@@ -306,17 +345,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/test-email", async (req, res) => {
     try {
-      const { email } = req.body;
+      const { email, subject, message } = req.body;
       console.log(`📧 테스트 이메일 전송 시작: ${email}`);
       
       const success = await sendEmail({
         to: email,
         from: process.env.GMAIL_USER || "",
-        subject: "🧪 ComplianceGuard 이메일 테스트",
+        subject: subject || "🧪 ComplianceGuard 이메일 테스트",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #2563eb;">📧 이메일 시스템 테스트</h2>
-            <p>이 이메일은 ComplianceGuard 시스템의 이메일 전송 테스트용입니다.</p>
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin: 0 0 10px 0; color: #334155;">메시지 내용:</h3>
+              <p style="margin: 0; white-space: pre-wrap; color: #475569;">${message || '테스트 메시지입니다.'}</p>
+            </div>
             <p><strong>발송 시간:</strong> ${new Date().toLocaleString('ko-KR')}</p>
             <p>이메일이 정상적으로 수신되었다면 시스템이 올바르게 작동하고 있습니다.</p>
             <hr>
@@ -343,8 +385,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Gmail 연결 테스트 엔드포인트
   app.post("/api/admin/test-gmail", async (req, res) => {
     try {
-      const { testGmailConnection } = await import('./email-test');
-      const success = await testGmailConnection();
+      console.log('🔧 Gmail 연결 테스트 시작...');
+      
+      const { sendEmail } = await import('./email');
+      const success = await sendEmail({
+        to: process.env.GMAIL_USER || "test@example.com",
+        from: process.env.GMAIL_USER || "",
+        subject: "🧪 Gmail 연결 테스트",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #16a34a;">✅ Gmail SMTP 연결 테스트 성공!</h2>
+            <p>이 이메일이 수신되었다면 Gmail 설정이 올바르게 구성되었습니다.</p>
+            <p><strong>테스트 시간:</strong> ${new Date().toLocaleString('ko-KR')}</p>
+            <p><strong>발신자:</strong> ${process.env.GMAIL_USER}</p>
+            <hr>
+            <small>ComplianceGuard - Gmail 연결 테스트</small>
+          </div>
+        `
+      });
       
       res.json({ 
         success, 
@@ -393,6 +451,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false, 
         message: "이메일 전송 중 오류가 발생했습니다." 
+      });
+    }
+  });
+
+  // 이메일 로그 확인 엔드포인트
+  app.get("/api/admin/email-logs", async (req, res) => {
+    try {
+      const logPath = path.join(process.cwd(), 'logging.txt');
+      
+      if (!fs.existsSync(logPath)) {
+        return res.json({ 
+          exists: false, 
+          message: "로그 파일이 아직 생성되지 않았습니다.",
+          logs: ""
+        });
+      }
+      
+      const logContent = fs.readFileSync(logPath, 'utf8');
+      const lines = logContent.split('\n');
+      
+      // 최근 50줄만 반환
+      const recentLines = lines.slice(-50).join('\n');
+      
+      res.json({ 
+        exists: true, 
+        message: "이메일 로그를 성공적으로 불러왔습니다.",
+        logs: recentLines,
+        totalLines: lines.length
+      });
+    } catch (error) {
+      console.error("이메일 로그 읽기 오류:", error);
+      res.status(500).json({ 
+        exists: false,
+        message: "로그 파일 읽기 중 오류가 발생했습니다.",
+        logs: ""
+      });
+    }
+  });
+
+  // 이메일 로그 삭제 엔드포인트
+  app.delete("/api/admin/email-logs", async (req, res) => {
+    try {
+      const logPath = path.join(process.cwd(), 'logging.txt');
+      
+      if (fs.existsSync(logPath)) {
+        fs.unlinkSync(logPath);
+        res.json({ 
+          success: true, 
+          message: "이메일 로그가 성공적으로 삭제되었습니다."
+        });
+      } else {
+        res.json({ 
+          success: true, 
+          message: "삭제할 로그 파일이 없습니다."
+        });
+      }
+    } catch (error) {
+      console.error("이메일 로그 삭제 오류:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "로그 파일 삭제 중 오류가 발생했습니다."
       });
     }
   });

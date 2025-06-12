@@ -1,0 +1,113 @@
+한국 법규 변경 모니터링 및 AI 기반 준법 관리 플랫폼 구축
+
+다음 요구사항에 따라 완전한 법규 준수 관리 웹 애플리케이션을 구축해주세요:
+
+프로젝트 개요
+프로젝트명: 한국 법규 변경 모니터링 및 AI 기반 준법 관리 플랫폼
+기술 스택: TypeScript, React.js, Express.js, PostgreSQL, OpenAI API
+아키텍처: Full-stack JavaScript with shadcn/ui components
+핵심 기능 요구사항
+1. 데이터 모델 설계 (shared/schema.ts)
+다음 엔티티들을 Drizzle ORM으로 구현:
+
+users: id, username, password (bcrypt 해시)
+regulations: id, name, article, content, effectiveDate, priority("높음"|"보통"|"낮음"), category, createdAt
+policies: id, name, fileName, content, uploadedAt, departmentId
+departments: id, name, code, contactName, contactEmail, contactPhone
+analyses: id, regulationId, policyId, departmentId, status, findings, recommendations, riskLevel("고위험"|"중위험"|"저위험"), createdAt, completedAt
+analysisProgress: id, analysisId, progress(0-100), status, steps(JSON array), createdAt
+notifications: id, type, title, message, isRead, createdAt
+2. 백엔드 기능 (Express.js)
+2.1 자동 법규 크롤링 시스템 (server/law-sync.ts)
+국가법령정보센터 API 시뮬레이션으로 72개 실제 한국 법규 데이터 생성
+부서별 관련도 분석 로직으로 법규를 적절한 부서에 자동 배정
+매일 자동 실행되는 크롤링 스케줄러
+법규 카테고리별 검색 기능
+2.2 AI 기반 월간 분석 시스템 (server/monthly-analysis.ts)
+OpenAI API를 활용한 법규 변경사항 자동 분석
+부서별 영향도 평가 및 위험도 분류
+자동 이메일 알림 발송 (SendGrid/Nodemailer)
+월간 스케줄러로 정기 분석 실행
+2.3 파일 업로드 및 AI 분석 (server/openai.ts)
+PDF/Word 파일 업로드 및 텍스트 추출
+OpenAI를 통한 정책 문서와 법규 간 준수성 분석
+위험도 평가 및 권고사항 생성
+2.4 이메일 알림 시스템 (server/email.ts)
+부서별 맞춤형 알림 템플릿
+위험도별 이메일 우선순위 설정
+발송 상태 추적 및 로깅
+3. 프론트엔드 구현 (React.js + shadcn/ui)
+3.1 메인 대시보드
+실시간 통계: 총 법규 수, 정책 수, 위험 항목, 월간 분석 건수
+부서별 진행률 원형 차트 (recharts 사용)
+최근 활동 피드
+빠른 작업 버튼들
+3.2 부서별 진행률 대시보드
+7개 부서 카드 레이아웃 (인사팀, 안전관리팀, 환경관리팀, IT보안팀, 법무팀, 재무팀, 운영관리팀)
+각 부서별 완료율, 긴급 법규, 월내 시행 예정 건수 표시
+진행률별 색상 코딩 및 우선순위 표시
+부서별 상세 페이지 링크
+3.3 법규 분석 센터
+2025년 분기별 법규 개정 현황 가로 막대 차트
+직무별 법규 분포 파이 차트
+후속조치 진행현황 관리 테이블
+실시간 데이터 기반 시각화
+3.4 법규 관리 대시보드
+전체 법규 목록 테이블 (페이지네이션)
+우선순위별 필터링 및 검색
+신규 법규 추가 모달
+법규별 상세 정보 표시
+3.5 관리자 페이지
+시스템 통계 개요
+법규 크롤링 수동 실행 및 상태
+월간 분석 수동 실행
+테스트 이메일 발송 기능
+스마트 분석 일괄 실행
+3.6 부서 연락처 관리
+부서별 담당자 정보 CRUD
+연락처 추가/수정 모달
+부서 코드 및 이메일 관리
+4. 기술적 구현 세부사항
+4.1 상태 관리
+TanStack Query (React Query v5) 사용
+캐시 무효화 및 실시간 업데이트
+로딩 상태 및 에러 처리
+4.2 UI/UX 컴포넌트
+shadcn/ui 기반 모든 컴포넌트
+Tailwind CSS로 반응형 디자인
+Lucide React 아이콘 사용
+프로그레스 바, 토스트 알림, 모달 등
+4.3 폼 관리
+react-hook-form + zod validation
+파일 업로드 (multer) 지원
+실시간 폼 검증
+4.4 라우팅
+wouter 라이브러리 사용
+페이지별 독립적 컴포넌트 구조
+5. 데이터 초기화
+인메모리 스토리지에 다음 샘플 데이터 자동 생성:
+
+7개 부서 (HR, SAFETY, ENV, IT, LEGAL, FINANCE, OPERATIONS)
+72개 실제 한국 법규 (근로기준법, 산업안전보건법, 개인정보보호법 등)
+8개 정책 문서
+부서별 분석 진행 데이터
+실시간 알림 데이터
+6. 자동화 기능
+법규 동기화 스케줄러 (매일 실행)
+월간 분석 스케줄러 (매월 실행)
+이메일 알림 자동 발송
+AI 기반 위험도 자동 평가
+7. 환경 설정
+필요한 환경 변수:
+
+OPENAI_API_KEY (AI 분석용)
+SENDGRID_API_KEY 또는 이메일 설정 (알림용)
+8. 추가 요구사항
+모든 텍스트는 한국어로 구현
+법규명과 조항은 실제 한국 법규 사용
+반응형 웹 디자인
+에러 처리 및 로딩 상태 관리
+TypeScript strict 모드 사용
+ESLint 및 코드 품질 관리
+이 프롬프트를 통해 완전히 작동하는 한국 법규 준수 관리 플랫폼을 구축하되, 모든 컴포넌트가 유기적으로 연결되고 실제 사용 가능한 수준의 기능을 제공해야 합니다.
+

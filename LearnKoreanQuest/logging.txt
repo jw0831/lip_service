@@ -487,3 +487,32 @@ Error: SendGrid credentials validation failed
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
 ========================================
 
+
+========================================
+EMAIL ERROR LOG - 2025-06-12T18:34:43.003Z
+========================================
+Context: Gmail SMTP sending failed
+Error Code: EDNS
+Error Message: queryA ETIMEOUT smtp.gmail.com
+Email To: jw0831@gmail.com
+Email Subject: 🚨 긴급 [고위험] 인사문화그룹 법규 준수 알림: 장애인차별금지 및 권리구제 등에 관한 법률
+Gmail User: SET
+Gmail Pass: SET
+SendGrid API Key: NOT_SET
+SendGrid From Email: NOT_SET
+Stack Trace:
+Error: queryA ETIMEOUT smtp.gmail.com
+    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/callback_resolver:45:19)
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-12T18:40:52.333Z
+========================================
+Context: Email sent successfully
+Email To: jw0831@gmail.com
+Email Subject: 🚨 긴급 [고위험] 인사문화그룹 법규 준수 알림: 장애인차별금지 및 권리구제 등에 관한 법률
+Message ID: <c0fc6d1b-fd04-2760-ab68-39452b6b4709@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+

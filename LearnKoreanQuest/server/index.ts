@@ -1,7 +1,14 @@
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { startSchedulers } from "./scheduler";
+
+// 환경변수 확인
+console.log('🔧 환경변수 상태:');
+console.log('GMAIL_USER:', process.env.GMAIL_USER ? 'SET' : 'NOT_SET');
+console.log('GMAIL_PASS:', process.env.GMAIL_PASS ? 'SET' : 'NOT_SET');
+console.log('SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? 'SET' : 'NOT_SET');
 
 const app = express();
 app.use(express.json());
@@ -57,9 +64,9 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // Serve the app on port 5000 or next available port
+  // Serve the app on port 3000 or next available port  
   // this serves both the API and the client.
-  const port = parseInt(process.env.PORT || "5000");
+  const port = parseInt(process.env.PORT || "3000");
   
   const startServer = (currentPort: number) => {
     server.listen({

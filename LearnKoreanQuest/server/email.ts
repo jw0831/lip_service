@@ -130,7 +130,7 @@ const createGmailTransporter = () => {
   const user = process.env.GMAIL_USER?.trim();
   const pass = process.env.GMAIL_PASS?.replace(/\s+/g, '');
   
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: user,

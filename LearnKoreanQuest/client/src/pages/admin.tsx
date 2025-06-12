@@ -93,7 +93,7 @@ export default function Admin() {
     resolver: zodResolver(complianceEmailSchema),
     defaultValues: {
       senderEmail: "tbvjakrso@hufs-gsuite.kr",
-      recipientEmail: "tbvjakrso@hufs-gsuite.kr",
+      recipientEmail: "", // 수신자는 빈 문자열로 시작하여 사용자가 직접 입력하도록 함
     },
   });
 
@@ -656,7 +656,10 @@ export default function Admin() {
                               <FormItem>
                                 <FormLabel>수신자 이메일</FormLabel>
                                 <FormControl>
-                                  <Input {...field} />
+                                  <Input 
+                                    {...field} 
+                                    placeholder="수신자@예시.com"
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>

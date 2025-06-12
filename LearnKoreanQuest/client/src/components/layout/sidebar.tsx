@@ -11,7 +11,6 @@ import {
 
 const navigation = [
   { name: "종합 현황", href: "/dashboard", icon: BarChart3 },
-  { name: "부서별 진행률", href: "/departments", icon: Building2 },
   { name: "법규 모니터링", href: "/regulations", icon: FileText },
   { name: "법규 분석 센터", href: "/analysis", icon: TrendingUp },
   { name: "관리자 페이지", href: "/admin", icon: Settings },

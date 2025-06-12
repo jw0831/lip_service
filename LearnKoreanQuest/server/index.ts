@@ -3,6 +3,10 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { startSchedulers } from "./scheduler";
+import dotenv from "dotenv";
+import { dot } from 'node:test/reporters';
+
+dotenv.config();
 
 // 환경변수 확인
 console.log('🔧 환경변수 상태:');

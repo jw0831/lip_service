@@ -347,8 +347,17 @@ ${targetRegulation?.['AI 후속 조치 사항'] || '후속 조치사항이 분�
     try {
       console.log("🧪 월간 시행 예정 법규 이메일 테스트 시작...");
       
-      const { sendMonthlyUpcomingRegulations } = await import('./scheduler');
-      await sendMonthlyUpcomingRegulations();
+      const { departmentEmails } = req.body;
+      
+      if (departmentEmails && Array.isArray(departmentEmails)) {
+        // 부서별 이메일이 지정된 경우 커스텀 발송
+        const { sendCustomMonthlyUpcomingRegulations } = await import('./scheduler');
+        await sendCustomMonthlyUpcomingRegulations(departmentEmails);
+      } else {
+        // 기본 발송
+        const { sendMonthlyUpcomingRegulations } = await import('./scheduler');
+        await sendMonthlyUpcomingRegulations();
+      }
       
       res.json({ 
         success: true,

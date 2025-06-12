@@ -66,8 +66,16 @@ const complianceEmailSchema = z.object({
   recipientEmail: z.string().email("유효한 수신자 이메일을 입력해주세요"),
 });
 
+const departmentEmailSchema = z.object({
+  departmentEmails: z.array(z.object({
+    department: z.string().min(1, "부서명을 선택해주세요"),
+    email: z.string().email("유효한 이메일 주소를 입력해주세요"),
+  })).min(1, "최소 1개 부서의 이메일을 입력해주세요"),
+});
+
 type EmailFormData = z.infer<typeof emailSchema>;
 type ComplianceEmailFormData = z.infer<typeof complianceEmailSchema>;
+type DepartmentEmailFormData = z.infer<typeof departmentEmailSchema>;
 
 export default function Admin() {
   const [testEmail, setTestEmail] = useState("");
@@ -76,6 +84,7 @@ export default function Admin() {
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [isComplianceEmailDialogOpen, setIsComplianceEmailDialogOpen] = useState(false);
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
+  const [isMonthlyEmailDialogOpen, setIsMonthlyEmailDialogOpen] = useState(false);
   const [emailLogs, setEmailLogs] = useState("");
   const { toast } = useToast();
 
@@ -94,6 +103,22 @@ export default function Admin() {
     defaultValues: {
       senderEmail: "tbvjakrso@hufs-gsuite.kr",
       recipientEmail: "", // 수신자는 빈 문자열로 시작하여 사용자가 직접 입력하도록 함
+    },
+  });
+
+  const departmentEmailForm = useForm<DepartmentEmailFormData>({
+    resolver: zodResolver(departmentEmailSchema),
+    defaultValues: {
+      departmentEmails: [
+        { department: "인사문화그룹", email: "" },
+        { department: "환경기획그룹", email: "" },
+        { department: "안전보건기획그룹", email: "" },
+        { department: "정보보호사무국", email: "" },
+        { department: "회계세무그룹", email: "" },
+        { department: "법무실", email: "" },
+        { department: "노사협력그룹", email: "" },
+        { department: "윤리경영사무국", email: "" },
+      ],
     },
   });
 
@@ -234,6 +259,25 @@ export default function Admin() {
     onError: () => {
       toast({
         title: "월간 시행 예정 법규 이메일 테스트 실패",
+        description: "이메일 발송 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const customMonthlyEmailMutation = useMutation({
+    mutationFn: (data: DepartmentEmailFormData) => 
+      apiRequest("POST", "/api/admin/test-monthly-upcoming-email", data),
+    onSuccess: () => {
+      toast({
+        title: "부서별 월간 시행 예정 법규 이메일 전송 완료",
+        description: "지정된 부서들에 시행 예정 법규 이메일이 발송되었습니다.",
+      });
+      setIsMonthlyEmailDialogOpen(false);
+    },
+    onError: () => {
+      toast({
+        title: "부서별 월간 시행 예정 법규 이메일 전송 실패",
         description: "이메일 발송 중 오류가 발생했습니다.",
         variant: "destructive",
       });
@@ -564,8 +608,112 @@ export default function Admin() {
                   className="w-full bg-green-600 hover:bg-green-700"
                 >
                   <Mail className="h-4 w-4 mr-2" />
-                  {monthlyUpcomingEmailTestMutation.isPending ? "발송 중..." : "월간 시행 예정 법규 이메일 테스트"}
+                  {monthlyUpcomingEmailTestMutation.isPending ? "발송 중..." : "월간 시행 예정 법규 이메일 테스트 (기본)"}
                 </Button>
+
+                <Dialog open={isMonthlyEmailDialogOpen} onOpenChange={setIsMonthlyEmailDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                      <Mail className="h-4 w-4 mr-2" />
+                      월간 시행 예정 법규 이메일 테스트 (부서별 이메일 지정)
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center">
+                        <Mail className="h-5 w-5 mr-2" />
+                        부서별 월간 시행 예정 법규 이메일 테스트
+                      </DialogTitle>
+                    </DialogHeader>
+                    
+                    <div className="text-sm text-slate-600 mb-4">
+                      종합현황에서 집계된 부서별 적용 법규 개정 현황 ({new Date().getMonth() + 1}월)의 상세보기 내용 중 시행예정 정보들을 
+                      아래 지정된 이메일 주소로 전송합니다.
+                    </div>
+
+                    <Form {...departmentEmailForm}>
+                      <form className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {departmentEmailForm.watch("departmentEmails").map((_, index) => (
+                            <div key={index} className="border border-slate-200 rounded-lg p-4 space-y-3">
+                              <div className="flex items-center space-x-2">
+                                <div className={`w-3 h-3 rounded-full ${getDepartmentColor(departmentEmailForm.watch(`departmentEmails.${index}.department`))}`}></div>
+                                <h4 className="font-medium text-slate-900">
+                                  {departmentEmailForm.watch(`departmentEmails.${index}.department`)}
+                                </h4>
+                              </div>
+                              
+                              <FormField
+                                control={departmentEmailForm.control}
+                                name={`departmentEmails.${index}.email`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="text-xs">이메일 주소</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        {...field} 
+                                        placeholder={`${departmentEmailForm.watch(`departmentEmails.${index}.department`)}@company.com`}
+                                        className="text-sm"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="border-t border-slate-200 pt-4">
+                          <div className="bg-blue-50 p-4 rounded-lg">
+                            <h4 className="font-medium text-blue-900 mb-2">📋 이메일 내용 미리보기</h4>
+                            <p className="text-sm text-blue-800 mb-2">
+                              • 제목: 📋 [부서명] {new Date().getMonth() + 1}월 시행 예정 법규 안내
+                            </p>
+                            <p className="text-sm text-blue-800 mb-2">
+                              • 내용: {new Date().getMonth() + 1}월에 시행 예정인 부서별 법규들의 상세 정보
+                            </p>
+                            <p className="text-sm text-blue-800">
+                              • AI 주요 개정 정리 및 후속 조치 사항 포함
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end space-x-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsMonthlyEmailDialogOpen(false)}
+                          >
+                            취소
+                          </Button>
+                          <Button 
+                            type="button"
+                            onClick={() => {
+                              const formData = departmentEmailForm.getValues();
+                              // 이메일이 입력된 부서만 필터링
+                              const validDepartmentEmails = formData.departmentEmails.filter(de => de.email.trim() !== "");
+                              if (validDepartmentEmails.length === 0) {
+                                toast({
+                                  title: "이메일 주소 필요",
+                                  description: "최소 1개 부서의 이메일 주소를 입력해주세요.",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
+                              customMonthlyEmailMutation.mutate({ departmentEmails: validDepartmentEmails });
+                            }}
+                            disabled={customMonthlyEmailMutation.isPending}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            <Mail className="h-4 w-4 mr-2" />
+                            {customMonthlyEmailMutation.isPending ? "전송 중..." : `이메일 발송 (${departmentEmailForm.watch("departmentEmails").filter(de => de.email.trim() !== "").length}개 부서)`}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
 
                 <Dialog open={isComplianceEmailDialogOpen} onOpenChange={setIsComplianceEmailDialogOpen}>
                   <DialogTrigger asChild>

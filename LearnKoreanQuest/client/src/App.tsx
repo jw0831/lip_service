@@ -19,7 +19,6 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/regulations" component={Regulations} />
-          <Route path="/analysis" component={Analysis} />
           <Route path="/admin" component={Admin} />
           <Route component={NotFound} />
         </Switch>

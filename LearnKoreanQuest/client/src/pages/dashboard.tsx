@@ -596,55 +596,6 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
 
-                {/* 2025년 연간 시행 예정 법규 */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <BarChart3 className="h-4 w-4" />
-                      <span>2025년 연간 시행 예정 법규</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {yearlyUpcomingRegulations.length > 0 ? (
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-slate-200">
-                              <th className="text-left text-sm font-medium text-slate-600 pb-3">법률명</th>
-                              <th className="text-left text-sm font-medium text-slate-600 pb-3">법령종류</th>
-                              <th className="text-left text-sm font-medium text-slate-600 pb-3">시행일자</th>
-                              <th className="text-left text-sm font-medium text-slate-600 pb-3">구분</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {yearlyUpcomingRegulations.map((regulation, index) => (
-                              <tr key={index} className="hover:bg-slate-50">
-                                <td className="py-3 text-sm font-medium text-slate-900">
-                                  {regulation.법률명}
-                                </td>
-                                <td className="py-3 text-sm text-slate-600">
-                                  {regulation.법령종류}
-                                </td>
-                                <td className="py-3 text-sm text-slate-600">
-                                  {regulation.시행일자}
-                                </td>
-                                <td className="py-3">
-                                  <Badge variant={regulation['제정·개정구분'] === '일부개정' ? 'default' : 'outline'} className="text-xs">
-                                    {regulation['제정·개정구분']}
-                                  </Badge>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-slate-500">
-                        2025년에 시행 예정인 법규가 없습니다.
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
               </div>
             )}
           </DialogContent>

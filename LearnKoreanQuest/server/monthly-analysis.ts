@@ -156,10 +156,68 @@ async function generateAndSendMonthlyReport(department: any) {
 export async function scheduledMonthlyAnalysis() {
   try {
     console.log("정기 월간 분석 실행...");
-    await runMonthlyAnalysis();
+    
+    // Excel 기반 간소화된 분석 실행
+    const { ExcelService } = await import("./excelService");
+    const excelService = ExcelService.getInstance();
+    const regulations = await excelService.getAllRegulations();
+    
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    
+    // 부서별 통계 계산
+    const departmentStats = new Map();
+    const departmentNames = Array.from(new Set(regulations.map(r => r.담당부서).filter(d => d && d !== 'None')));
+    
+    for (const deptName of departmentNames) {
+      const deptRegulations = regulations.filter(r => r.담당부서 === deptName);
+      
+      // 분석된 법규 (AI 주요 개정 정리가 있는 법규)
+      const analyzedRegulations = deptRegulations.filter(r => 
+        r['AI 주요 개정 정리'] && r['AI 주요 개정 정리'] !== '- [개정이유]: 없음\n\n- [주요내용]: 없음'
+      );
+      
+      // 후속 조치가 필요한 법규
+      const actionRequiredRegulations = deptRegulations.filter(r => 
+        r['AI 후속 조치 사항'] && r['AI 후속 조치 사항'] !== '내용/조치사항 없음'
+      );
+      
+      // 현재 월 시행 예정 법규
+      const upcomingRegulations = deptRegulations.filter(r => {
+        if (!r.시행일자 || r.시행일자 === 'None') return false;
+        if (!r.시행일자.includes('2025')) return false;
+        
+        const dateMatch = r.시행일자.match(/2025-(\d{2})/);
+        if (!dateMatch) return false;
+        
+        const month = parseInt(dateMatch[1]);
+        return month === currentMonth;
+      });
+      
+      departmentStats.set(deptName, {
+        totalRegulations: deptRegulations.length,
+        analyzedRegulations: analyzedRegulations.length,
+        actionRequiredRegulations: actionRequiredRegulations.length,
+        upcomingRegulations: upcomingRegulations.length
+      });
+      
+      console.log(`📊 ${deptName}: 총 ${deptRegulations.length}건, 분석 완료 ${analyzedRegulations.length}건, 조치 필요 ${actionRequiredRegulations.length}건, ${currentMonth}월 시행 예정 ${upcomingRegulations.length}건`);
+    }
+    
+    const analysisResult = {
+      timestamp: new Date().toISOString(),
+      totalDepartments: departmentNames.length,
+      totalRegulations: regulations.length,
+      departmentStats: Object.fromEntries(departmentStats),
+      summary: `${departmentNames.length}개 부서, 총 ${regulations.length}건의 법규에 대한 월간 분석이 완료되었습니다.`
+    };
+    
+    console.log("✅ 정기 월간 분석 완료:", analysisResult.summary);
+    return analysisResult;
     
   } catch (error) {
     console.error("정기 월간 분석 실패:", error);
+    throw error;
   }
 }
 

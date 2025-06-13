@@ -55,17 +55,6 @@ interface DashboardStats {
 }
 
 // Email form schemas
-const emailSchema = z.object({
-  to: z.string().email("유효한 이메일 주소를 입력해주세요"),
-  subject: z.string().min(1, "제목을 입력해주세요"),
-  message: z.string().min(1, "메시지를 입력해주세요"),
-});
-
-const complianceEmailSchema = z.object({
-  senderEmail: z.string().email("유효한 발신자 이메일을 입력해주세요"),
-  recipientEmail: z.string().email("유효한 수신자 이메일을 입력해주세요"),
-});
-
 const departmentEmailSchema = z.object({
   departmentEmails: z.array(z.object({
     department: z.string().min(1, "부서명을 선택해주세요"),
@@ -73,38 +62,15 @@ const departmentEmailSchema = z.object({
   })).min(1, "최소 1개 부서의 이메일을 입력해주세요"),
 });
 
-type EmailFormData = z.infer<typeof emailSchema>;
-type ComplianceEmailFormData = z.infer<typeof complianceEmailSchema>;
 type DepartmentEmailFormData = z.infer<typeof departmentEmailSchema>;
 
 export default function Admin() {
-  const [testEmail, setTestEmail] = useState("");
   const [syncInProgress, setSyncInProgress] = useState(false);
-  const [analysisInProgress, setAnalysisInProgress] = useState(false);
-  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
-  const [isComplianceEmailDialogOpen, setIsComplianceEmailDialogOpen] = useState(false);
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
   const [isMonthlyEmailDialogOpen, setIsMonthlyEmailDialogOpen] = useState(false);
   const [emailLogs, setEmailLogs] = useState("");
   const { toast } = useToast();
 
-  // Email forms
-  const form = useForm<EmailFormData>({
-    resolver: zodResolver(emailSchema),
-    defaultValues: {
-      to: "",
-      subject: "🧪 ComplianceGuard 테스트 이메일",
-      message: "안녕하세요,\n\n이것은 ComplianceGuard 시스템의 테스트 이메일입니다.\n\n감사합니다.",
-    },
-  });
-
-  const complianceForm = useForm<ComplianceEmailFormData>({
-    resolver: zodResolver(complianceEmailSchema),
-    defaultValues: {
-      senderEmail: "tbvjakrso@hufs-gsuite.kr",
-      recipientEmail: "", // 수신자는 빈 문자열로 시작하여 사용자가 직접 입력하도록 함
-    },
-  });
 
   const departmentEmailForm = useForm<DepartmentEmailFormData>({
     resolver: zodResolver(departmentEmailSchema),
@@ -134,94 +100,53 @@ export default function Admin() {
     queryKey: ["/api/dashboard/stats"],
   });
 
-  // Email mutations
-  const emailMutation = useMutation({
-    mutationFn: (data: EmailFormData) => apiRequest("POST", "/api/admin/test-email", { 
-      email: data.to,
-      subject: data.subject,
-      message: data.message 
-    }),
-    onSuccess: () => {
-      toast({
-        title: "이메일 전송 완료",
-        description: "테스트 이메일이 성공적으로 전송되었습니다.",
-      });
-      setIsEmailDialogOpen(false);
-      form.reset();
-    },
-    onError: () => {
-      toast({
-        title: "이메일 전송 실패",
-        description: "이메일 전송 중 오류가 발생했습니다.",
-        variant: "destructive",
-      });
-    },
-  });
 
-  const complianceAnalysisMutation = useMutation({
-    mutationFn: (data: ComplianceEmailFormData) => 
-      apiRequest("POST", "/api/admin/compliance-analysis", data),
-    onSuccess: () => {
-      toast({
-        title: "AI 분석 및 이메일 전송 완료",
-        description: "법규 준수 분석이 완료되고 이메일이 전송되었습니다.",
-      });
-      setIsComplianceEmailDialogOpen(false);
-    },
-    onError: () => {
-      toast({
-        title: "AI 분석 실패",
-        description: "AI 분석 또는 이메일 전송 중 오류가 발생했습니다.",
-        variant: "destructive",
-      });
-    },
-  });
 
   const monthlyAnalysisMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/admin/monthly-analysis"),
-    onSuccess: () => {
-      toast({
-        title: "월간 분석 완료",
-        description: "월간 법규 분석이 성공적으로 완료되었습니다.",
-      });
+    onSuccess: (data: any) => {
+      console.log("월간 분석 결과:", data);
+      
+      if (data.result && data.result.departmentStats) {
+        const stats = data.result;
+        const deptCount = Object.keys(stats.departmentStats).length;
+        toast({
+          title: "월간 분석 완료",
+          description: `${deptCount}개 부서, 총 ${stats.totalRegulations}건의 법규 분석이 완료되었습니다.`,
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "월간 분석 완료",
+          description: data.message || "분석이 성공적으로 완료되었습니다.",
+        });
+      }
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("월간 분석 오류:", error);
       toast({
         title: "월간 분석 실패",
-        description: "월간 분석 중 오류가 발생했습니다.",
+        description: error?.error || error?.message || "월간 분석 중 오류가 발생했습니다.",
         variant: "destructive",
       });
     },
   });
 
-  const sendgridTestMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/admin/test-email-service"),
-    onSuccess: () => {
-      toast({
-        title: "이메일 테스트 성공",
-        description: "이메일 서비스 연결이 성공했습니다.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "이메일 테스트 실패",
-        description: "이메일 서비스 연결에 실패했습니다. 설정을 확인해주세요.",
-        variant: "destructive",
-      });
-    },
-  });
 
   const emailLogsMutation = useMutation({
     mutationFn: () => apiRequest("GET", "/api/admin/email-logs"),
     onSuccess: (data: any) => {
-      setEmailLogs(data.logs || "로그가 없습니다.");
+      console.log("이메일 로그 데이터:", data);
+      const logContent = data.logs || "로그가 없습니다.";
+      setEmailLogs(logContent);
       setIsLogDialogOpen(true);
       toast({
         title: "로그 불러오기 성공",
-        description: `총 ${data.totalLines || 0}줄의 로그를 불러왔습니다.`,
+        description: `총 ${data.totalLines || 0}줄의 로그를 불러왔습니다. (최근 50줄 표시)`,
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("로그 불러오기 오류:", error);
       toast({
         title: "로그 불러오기 실패",
         description: "로그 파일을 불러올 수 없습니다.",
@@ -309,11 +234,6 @@ export default function Admin() {
     upcomingRegulations: 0
   };
 
-  // Email form handlers
-  const onEmailSubmit = (data: EmailFormData) => {
-    emailMutation.mutate(data);
-  };
-
   const handleSync = async () => {
     setSyncInProgress(true);
     try {
@@ -334,50 +254,6 @@ export default function Admin() {
     }
   };
 
-  const handleAnalysis = async () => {
-    setAnalysisInProgress(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 3000)); // 분석 시뮬레이션
-      toast({
-        title: "AI 분석 완료",
-        description: "모든 법규에 대한 AI 분석이 완료되었습니다.",
-      });
-    } catch (error) {
-      toast({
-        title: "분석 실패",
-        description: "AI 분석 중 오류가 발생했습니다.",
-        variant: "destructive",
-      });
-    } finally {
-      setAnalysisInProgress(false);
-    }
-  };
-
-  const handleTestEmail = async () => {
-    if (!testEmail) {
-      toast({
-        title: "이메일 주소 필요",
-        description: "테스트 이메일 주소를 입력해주세요.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      // 이메일 전송 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast({
-        title: "테스트 이메일 전송 완료",
-        description: `${testEmail}로 테스트 이메일이 전송되었습니다.`,
-      });
-    } catch (error) {
-      toast({
-        title: "이메일 전송 실패",
-        description: "테스트 이메일 전송 중 오류가 발생했습니다.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const exportData = () => {
     if (!regulations) return;
@@ -447,175 +323,37 @@ export default function Admin() {
 
       <div className="p-6">
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Email Test */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Mail className="h-5 w-5 mr-2" />
-                이메일 시스템 테스트
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-green-50 rounded-lg">
-                <h4 className="font-medium text-slate-900 mb-2">이메일 서비스 상태</h4>
-                <p className="text-sm text-slate-600 mb-3">
-                  Gmail SMTP 및 SendGrid API 하이브리드 이메일 발송 서비스가 대기 중입니다.
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">
-                    발송 대기열: 0건
-                  </span>
-                  <Badge className="bg-green-100 text-green-800">대기</Badge>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Button 
-                  onClick={() => sendgridTestMutation.mutate()}
-                  disabled={sendgridTestMutation.isPending}
-                  className="w-full" 
-                  variant="secondary"
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  {sendgridTestMutation.isPending ? "테스트 중..." : "이메일 서비스 연결 테스트"}
-                </Button>
-                
-                <Button 
-                  onClick={() => emailLogsMutation.mutate()}
-                  disabled={emailLogsMutation.isPending}
-                  className="w-full" 
-                  variant="outline"
-                >
-                  <FileSearch className="h-4 w-4 mr-2" />
-                  {emailLogsMutation.isPending ? "로그 로딩 중..." : "이메일 로그 확인"}
-                </Button>
-                
-                <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="w-full" variant="outline">
-                      <Mail className="h-4 w-4 mr-2" />
-                      테스트 이메일 발송
-                    </Button>
-                  </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>테스트 이메일 발송</DialogTitle>
-                  </DialogHeader>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onEmailSubmit)} className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="to"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>받는 사람</FormLabel>
-                            <FormControl>
-                              <Input placeholder="테스트@예시.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="subject"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>제목</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="message"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>메시지</FormLabel>
-                            <FormControl>
-                              <Textarea {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="flex justify-end space-x-2">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => setIsEmailDialogOpen(false)}
-                        >
-                          취소
-                        </Button>
-                        <Button 
-                          type="submit" 
-                          disabled={emailMutation.isPending}
-                        >
-                          {emailMutation.isPending ? "발송 중..." : "이메일 발송"}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* AI Analysis Control */}
-          <Card>
+        {/* AI Analysis Control */}
+        <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Bot className="h-5 w-5 mr-2" />
-                AI 분석 관리
+                이메일 알림 서비스
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 bg-purple-50 rounded-lg">
-                <h4 className="font-medium text-slate-900 mb-2">월간 자동 분석</h4>
+                <h4 className="font-medium text-slate-900 mb-2">AI 기반 법규 분석 및 이메일 시스템</h4>
                 <p className="text-sm text-slate-600 mb-3">
-                  매월 1일 오전 9시에 전체 부서에 대한 법규 준수 분석을 자동으로 실행합니다.
+                  종합현황 데이터를 기반으로 부서별 맞춤형 법규 이메일을 발송하고 AI 분석 결과를 전달합니다.
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-600">
-                    다음 실행: 2025년 1월 1일 09:00
+                    Gmail SMTP 연결 상태
                   </span>
-                  <Badge className="bg-green-100 text-green-800">활성화</Badge>
+                  <Badge className="bg-green-100 text-green-800">연결됨</Badge>
                 </div>
               </div>
               
-              <div className="space-y-3">
-                <Button 
-                  onClick={() => monthlyAnalysisMutation.mutate()}
-                  disabled={monthlyAnalysisMutation.isPending}
-                  className="w-full"
-                  variant="secondary"
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  {monthlyAnalysisMutation.isPending ? "분석 중..." : "월간 분석 수동 실행"}
-                </Button>
-
-                <Button 
-                  onClick={() => monthlyUpcomingEmailTestMutation.mutate()}
-                  disabled={monthlyUpcomingEmailTestMutation.isPending}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  {monthlyUpcomingEmailTestMutation.isPending ? "발송 중..." : "월간 시행 예정 법규 이메일 테스트 (기본)"}
-                </Button>
-
+              <div className="flex justify-center">
                 <Dialog open={isMonthlyEmailDialogOpen} onOpenChange={setIsMonthlyEmailDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                      <Mail className="h-4 w-4 mr-2" />
-                      월간 시행 예정 법규 이메일 테스트 (부서별 이메일 지정)
+                    <Button className="w-full max-w-md bg-green-600 hover:bg-green-700 h-16 flex items-center justify-center">
+                      <Bot className="h-5 w-5 mr-2" />
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm">월간 시행 예정 법규 부서별 이메일 전송</span>
+                        <span className="text-xs opacity-90">(맞춤형 분석 리포트)</span>
+                      </div>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -714,124 +452,9 @@ export default function Admin() {
                     </Form>
                   </DialogContent>
                 </Dialog>
-
-                <Dialog open={isComplianceEmailDialogOpen} onOpenChange={setIsComplianceEmailDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                      <Bot className="h-4 w-4 mr-2" />
-                      AI 법규 분석 & 이메일 전송
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center">
-                        <Bot className="h-5 w-5 mr-2" />
-                        AI 후속조치사항 이메일 발송
-                      </DialogTitle>
-                    </DialogHeader>
-                    
-                    <div className="text-sm text-slate-600 mb-4">
-                      엑셀 데이터의 AI 후속조치사항을 분석하여 담당 부서에 맞춤형 이메일을 발송합니다.
-                    </div>
-
-                    <Form {...complianceForm}>
-                      <form className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={complianceForm.control}
-                            name="senderEmail"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>발신자 이메일</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={complianceForm.control}
-                            name="recipientEmail"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>수신자 이메일</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    {...field} 
-                                    placeholder="수신자@예시.com"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="border rounded-lg p-4 bg-slate-50">
-                          <h3 className="font-medium mb-3">테스트 이메일 내용 미리보기</h3>
-                          <div className="text-sm space-y-2">
-                            <div className="font-medium">제목: 🚨 긴급 [고위험] 안전관리 법규 준수 알림: 산업안전보건법령 시행규칙</div>
-                            
-                            <div className="bg-white p-4 rounded border text-xs">
-                              <div className="text-red-600 font-bold mb-2">🔴 안전관리 긴급 알림 (D-15일)</div>
-                              <div className="mb-2">시행일자: 2024-07-01 | 위험도: 고위험 | 필수 대응: 즉시 조치 필요</div>
-                              
-                              <div className="bg-blue-50 p-3 rounded mb-3">
-                                <div className="font-bold text-blue-800 mb-1">💡 산업안전보건법 위험성 평가 결과</div>
-                                <div className="text-blue-700">위험요인 식별: 중대재해처벌법 강화에 따른 안전관리체계 재정비 필요</div>
-                              </div>
-                              
-                              <div className="bg-green-50 p-3 rounded">
-                                <div className="font-bold text-green-800 mb-2">📋 안전관리 이행 조치사항 (액션 아이템)</div>
-                                <div className="text-green-700">
-                                  <div className="font-bold mb-1">🔧 즉시 조치사항 (7일 이내):</div>
-                                  <ul className="list-disc list-inside space-y-1">
-                                    <li>안전보건관리책임자 지정 및 교육 이수 확인</li>
-                                    <li>작업환경측정 실시 현황 점검</li>
-                                    <li>위험성평가 실시 및 개선대책 수립</li>
-                                  </ul>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end space-x-3">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setIsComplianceEmailDialogOpen(false)}
-                          >
-                            취소
-                          </Button>
-                          <Button 
-                            type="button"
-                            onClick={() => {
-                              const formData = complianceForm.getValues();
-                              complianceAnalysisMutation.mutate(formData);
-                            }}
-                            disabled={complianceAnalysisMutation.isPending}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            <Mail className="h-4 w-4 mr-2" />
-                            {complianceAnalysisMutation.isPending ? "전송 중..." : "이메일 발송"}
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
-                
-                <p className="text-xs text-slate-500 text-center">
-                  AI 분석을 통해 법규 준수 보고서를 생성하고 하이브리드 이메일 서비스로 전송합니다.
-                </p>
               </div>
             </CardContent>
           </Card>
-
-        </div>
 
         {/* Email Logs Dialog */}
         <Dialog open={isLogDialogOpen} onOpenChange={setIsLogDialogOpen}>
@@ -855,8 +478,21 @@ export default function Admin() {
             </DialogHeader>
             
             <div className="flex-1 overflow-auto">
-              <div className="p-4 bg-slate-900 text-green-400 rounded font-mono text-sm whitespace-pre-wrap max-h-96 overflow-y-auto">
-                {emailLogs || "로그가 없습니다."}
+              <div className="p-4 bg-slate-900 text-green-400 rounded font-mono text-xs whitespace-pre-wrap max-h-96 overflow-y-auto">
+                {emailLogs ? (
+                  emailLogs.split('\n').map((line, index) => (
+                    <div key={index} className={`
+                      ${line.includes('SUCCESS') ? 'text-green-300' : ''}
+                      ${line.includes('ERROR') || line.includes('실패') ? 'text-red-300' : ''}
+                      ${line.includes('EMAIL') ? 'text-blue-300' : ''}
+                      ${line.includes('=========') ? 'text-yellow-300 font-bold' : ''}
+                    `}>
+                      {line}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-slate-400">로그가 없습니다.</div>
+                )}
               </div>
             </div>
             

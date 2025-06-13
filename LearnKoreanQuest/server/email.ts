@@ -470,20 +470,14 @@ export async function sendMonthlyUpcomingRegulationsEmail(
                 <span style="color: #6b7280; font-weight: 500;">구분:</span>
                 <span style="font-weight: 600; margin-left: 8px;">${regulation['제정·개정구분'] || '-'}</span>
               </div>
-              ${regulation['개정 법률 조항'] ? `
-              <div style="grid-column: 1 / -1;">
-                <span style="color: #6b7280; font-weight: 500;">개정 법률 조항:</span>
-                <span style="font-weight: 600; margin-left: 8px; color: #dc2626;">${regulation['개정 법률 조항']}</span>
-              </div>
-              ` : ''}
             </div>
 
-            ${regulation['AI 주요 개정 정리'] && 
-             regulation['AI 주요 개정 정리'] !== '- [개정이유]: 없음\\n\\n- [주요내용]: 없음' ? `
+            ${regulation['개정 법률 조항'] && 
+             regulation['개정 법률 조항'] !== 'None' ? `
               <div style="background: #dbeafe; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-                <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e40af;">💡 AI 주요 개정 정리</p>
+                <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e40af;">💡 개정 법률 조항</p>
                 <div style="color: #1e40af; white-space: pre-line; font-size: 14px;">
-                  ${regulation['AI 주요 개정 정리']}
+                  ${regulation['개정 법률 조항']}
                 </div>
               </div>
             ` : ''}

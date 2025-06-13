@@ -566,12 +566,12 @@ export default function Dashboard() {
                               </div>
                             </div>
 
-                            {regulation['AI 주요 개정 정리'] && 
-                             regulation['AI 주요 개정 정리'] !== '- [개정이유]: 없음\n\n- [주요내용]: 없음' && (
+                            {regulation['개정 법률 조항'] && 
+                             regulation['개정 법률 조항'] !== 'None' && (
                               <div className="mt-3 p-3 bg-blue-50 rounded">
-                                <p className="text-sm font-medium text-blue-900 mb-1">AI 주요 개정 정리</p>
+                                <p className="text-sm font-medium text-blue-900 mb-1">개정 법률 조항</p>
                                 <p className="text-sm text-blue-800 whitespace-pre-line">
-                                  {regulation['AI 주요 개정 정리']}
+                                  {regulation['개정 법률 조항']}
                                 </p>
                               </div>
                             )}

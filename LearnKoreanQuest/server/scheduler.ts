@@ -240,12 +240,12 @@ export async function sendCustomMonthlyUpcomingRegulations(departmentEmails: Arr
                     </div>
                   </div>
 
-                  ${regulation['AI 주요 개정 정리'] && 
-                   regulation['AI 주요 개정 정리'] !== '- [개정이유]: 없음\\n\\n- [주요내용]: 없음' ? `
+                  ${regulation['개정 법률 조항'] && 
+                   regulation['개정 법률 조항'] !== 'None' ? `
                     <div style="background: #dbeafe; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-                      <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e40af;">💡 AI 주요 개정 정리</p>
+                      <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e40af;">💡 개정 법률 조항</p>
                       <div style="color: #1e40af; white-space: pre-line; font-size: 14px;">
-                        ${regulation['AI 주요 개정 정리']}
+                        ${regulation['개정 법률 조항']}
                       </div>
                     </div>
                   ` : ''}

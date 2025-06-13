@@ -335,11 +335,27 @@ ${targetRegulation?.['AI 후속 조치 사항'] || '후속 조치사항이 분�
 
   app.post("/api/admin/monthly-analysis", async (req, res) => {
     try {
-      // Simulate analysis process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      res.json({ message: "월간 분석이 완료되었습니다." });
-    } catch (error) {
-      res.status(500).json({ message: "월간 분석 중 오류가 발생했습니다." });
+      console.log("🔍 월간 분석 수동 실행 시작...");
+      
+      const { runImmediateMonthlyAnalysis } = await import('./scheduler');
+      const analysisResult = await runImmediateMonthlyAnalysis();
+      
+      console.log("✅ 월간 분석 수동 실행 완료");
+      
+      res.json({ 
+        success: true,
+        message: "월간 분석이 성공적으로 완료되었습니다.",
+        result: analysisResult || "분석이 완료되었습니다.",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
+      console.error("❌ 월간 분석 실행 실패:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "월간 분석 중 오류가 발생했습니다.",
+        error: error.message || "알 수 없는 오류",
+        timestamp: new Date().toISOString()
+      });
     }
   });
 

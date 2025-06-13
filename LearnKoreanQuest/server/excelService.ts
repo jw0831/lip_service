@@ -52,7 +52,7 @@ export class ExcelService {
     }
 
     try {
-      const excelPath = path.join(__dirname, '../attached_assets/law_list2ai_1749727941667.xlsx');
+      const excelPath = path.join(__dirname, '../../data/law_list2ai.xlsx');
       const workbook = XLSX.readFile(excelPath);
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];

@@ -389,6 +389,39 @@ ${targetRegulation?.['AI 후속 조치 사항'] || '후속 조치사항이 분�
     }
   });
 
+  // 종합 현황 이메일 발송 API
+  app.post("/api/admin/send-comprehensive-status", async (req, res) => {
+    try {
+      console.log("📊 종합 현황 이메일 발송 API 호출...");
+      
+      const { recipientEmail } = req.body;
+      
+      if (!recipientEmail) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "수신자 이메일 주소가 필요합니다." 
+        });
+      }
+
+      const { sendComprehensiveStatusEmail } = await import('./scheduler');
+      const success = await sendComprehensiveStatusEmail(recipientEmail);
+
+      res.json({
+        success,
+        message: success ? "종합 현황 이메일이 성공적으로 발송되었습니다." : "이메일 발송에 실패했습니다.",
+        recipientEmail
+      });
+
+    } catch (error) {
+      console.error("종합 현황 이메일 발송 실패:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "종합 현황 이메일 발송 중 오류가 발생했습니다.",
+        error: error instanceof Error ? error.message : "알 수 없는 오류"
+      });
+    }
+  });
+
   app.post("/api/admin/test-email", async (req, res) => {
     try {
       const { email, subject, message } = req.body;

@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { scheduledLawSync } from "./law-sync";
 import { scheduledMonthlyAnalysis } from "./monthly-analysis";
-import { sendMonthlyUpcomingRegulationsEmail } from "./email";
+import { sendMonthlyUpcomingRegulationsEmail, sendEmail } from "./email";
 import dotenv from "dotenv";
 
 // 마크다운을 HTML로 변환하는 함수 (대시보드와 동일한 로직, 인라인 스타일)
@@ -191,6 +191,177 @@ export async function sendMonthlyUpcomingRegulations() {
     
   } catch (error) {
     console.error("월간 시행 예정 법규 이메일 발송 실패:", error);
+  }
+}
+
+// 종합 현황 이메일 발송 함수
+export async function sendComprehensiveStatusEmail(recipientEmail: string) {
+  try {
+    console.log("📊 종합 현황 이메일 발송 시작...");
+    
+    const { ExcelService } = await import("./excelService");
+    const excelService = ExcelService.getInstance();
+    const regulations = await excelService.getAllRegulations();
+    const departments = await excelService.getDepartments();
+    
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    
+    // 대시보드와 동일한 통계 계산
+    const yearlyAmendments = regulations.filter(r => {
+      if (!r.시행일자 || r.시행일자 === 'None') return false;
+      return r.시행일자.includes('2025');
+    });
+    
+    const stats = {
+      totalRegulations: regulations.length,
+      totalDepartments: departments.length,
+      riskItems: regulations.filter(r => 
+        r['AI 후속 조치 사항'] && r['AI 후속 조치 사항'] !== '내용/조치사항 없음'
+      ).length,
+      yearlyAmendments: yearlyAmendments.length
+    };
+
+    // 부서별 진행상황 계산 (대시보드 로직과 동일)
+    const departmentStats = Array.from(new Set(regulations.map(r => r.담당부서).filter(d => d && d !== 'None')))
+      .map(deptName => {
+        const deptRegulations = regulations.filter(r => r.담당부서 === deptName);
+        
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        
+        const yearlyUpcomingRegulations = deptRegulations.filter(r => {
+          if (!r.시행일자 || r.시행일자 === 'None') return false;
+          return r.시행일자.includes('2025');
+        }).length;
+        
+        const currentMonthRegulations = deptRegulations.filter(r => {
+          if (!r.시행일자 || r.시행일자 === 'None') return false;
+          if (!r.시행일자.includes('2025')) return false;
+          
+          const dateMatch = r.시행일자.match(/2025-(\d{2})/);
+          if (!dateMatch) return false;
+          
+          const month = parseInt(dateMatch[1]);
+          return month === currentMonth;
+        }).length;
+
+        const monthlyCompletedRegulations = deptRegulations.filter(r => {
+          if (!r.시행일자 || r.시행일자 === 'None') return false;
+          if (!r.시행일자.includes('2025')) return false;
+          
+          const dateMatch = r.시행일자.match(/2025-(\d{2})/);
+          if (!dateMatch) return false;
+          
+          const month = parseInt(dateMatch[1]);
+          return month >= 1 && month < currentMonth;
+        }).length;
+        
+        const getDepartmentColor = (deptName: string) => {
+          const colors = {
+            "인사문화그룹": "#3b82f6",
+            "환경기획그룹": "#22c55e", 
+            "안전보건기획그룹": "#f59e0b",
+            "정보보호사무국": "#8b5cf6",
+            "회계세무그룹": "#6366f1",
+            "법무실": "#ef4444",
+            "노사협력그룹": "#eab308",
+            "윤리경영사무국": "#ec4899",
+            "IP전략센터": "#06b6d4",
+            "경영전략그룹": "#10b981",
+            "내부회계관리섹션": "#8b5cf6",
+          };
+          return colors[deptName as keyof typeof colors] || "#6b7280";
+        };
+
+        return {
+          name: deptName,
+          displayName: deptName,
+          totalRegulations: deptRegulations.length,
+          yearlyUpcomingRegulations,
+          currentMonthRegulations,
+          monthlyCompletedRegulations,
+          progressPercentage: yearlyUpcomingRegulations > 0 ? 
+            Math.round((monthlyCompletedRegulations / yearlyUpcomingRegulations) * 100) : 0,
+          color: getDepartmentColor(deptName)
+        };
+      })
+      .sort((a, b) => b.totalRegulations - a.totalRegulations);
+
+    const subject = `📊 ${currentMonth}월 종합 현황 보고서 - ComplianceGuard`;
+    
+    // 플레인 텍스트로 종합 현황 내용 작성
+    const textContent = `
+📊 ComplianceGuard 종합 현황
+
+${currentMonth}월 법규 개정 현황 종합 보고서
+발송일: ${new Date().toLocaleString('ko-KR')}
+
+========================================
+
+📈 주요 통계
+
+당사 전체 적용 법규: ${stats.totalRegulations}건
+- 법률, 시행령, 시행규칙
+
+시행 예정 법규(2025년): ${stats.yearlyAmendments}건
+- 2025년 연간 시행 예정
+
+========================================
+
+🏢 부서별 적용 법규 개정 현황 (${currentMonth}월)
+
+${departmentStats.slice(0, 8).map(dept => `
+[${dept.displayName}]
+- 관리 법규: ${dept.totalRegulations}건
+- ${currentMonth}월 시행 예정: ${dept.currentMonthRegulations}건  
+- 2025년 시행 예정: ${dept.yearlyUpcomingRegulations}건
+- 진행률: ${dept.progressPercentage}% (완료: ${dept.monthlyCompletedRegulations}/${dept.yearlyUpcomingRegulations})
+`).join('')}
+
+========================================
+
+📞 문의 및 지원
+
+• 상세한 법규 내용은 ComplianceGuard 시스템에서 확인 가능합니다
+• 법규 준수 관련 문의: 법무팀 (${process.env.GMAIL_USER || process.env.SENDGRID_FROM_EMAIL})
+• 긴급한 사안의 경우 즉시 연락 바랍니다
+
+========================================
+
+ComplianceGuard - AI 기반 법규 준수 모니터링 플랫폼
+발송시간: ${new Date().toLocaleString('ko-KR')}
+    `;
+
+    // HTML은 기본 형식으로만
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+        <pre style="white-space: pre-wrap; font-family: Arial, sans-serif; line-height: 1.6;">
+${textContent}
+        </pre>
+      </div>
+    `;
+
+    console.log(`📤 종합 현황 이메일 발송 시도: ${recipientEmail}`);
+    
+    const emailResult = await sendEmail({
+      to: recipientEmail,
+      from: process.env.GMAIL_USER || process.env.SENDGRID_FROM_EMAIL || "",
+      subject,
+      html
+    });
+    
+    if (emailResult) {
+      console.log(`✅ 종합 현황 이메일 발송 완료: ${recipientEmail}`);
+    } else {
+      console.log(`❌ 종합 현황 이메일 발송 실패: ${recipientEmail}`);
+    }
+    
+    return emailResult;
+    
+  } catch (error) {
+    console.error("종합 현황 이메일 발송 실패:", error);
+    throw error;
   }
 }
 

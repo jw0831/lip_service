@@ -1132,3 +1132,157 @@ Message ID: <0ad63798-c724-6f06-eefe-e8db0da74394@hufs-gsuite.kr>
 Service Used: Gmail
 ========================================
 
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:32:18.939Z
+========================================
+Context: Email sent successfully
+Email To: jw0831@gmail.com
+Email Subject: 📋 정보보호사무국 6월 시행 예정 법규 안내
+Message ID: <fd600b0e-d600-e7b0-178d-e427a17bc5de@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:32:23.456Z
+========================================
+Context: Email sent successfully
+Email To: jw0831@gmail.com
+Email Subject: 📋 회계세무그룹 6월 시행 예정 법규 안내
+Message ID: <2f6dac02-9ec1-5b7f-f3c4-723ac97100e1@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:37:55.626Z
+========================================
+Context: Email sent successfully
+Email To: jw0831@gmail.com
+Email Subject: 📋 정보보호사무국 6월 시행 예정 법규 안내
+Message ID: <dd3a7640-7879-b193-d001-41501621858f@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:37:59.820Z
+========================================
+Context: Email sent successfully
+Email To: jw0831@gmail.com
+Email Subject: 📋 회계세무그룹 6월 시행 예정 법규 안내
+Message ID: <66cda81e-5f90-f9f2-6ae2-fed59fc27d74@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:40:12.181Z
+========================================
+Context: Email sent successfully
+Email To: jw0831@gmail.com
+Email Subject: 📋 정보보호사무국 6월 시행 예정 법규 안내
+Message ID: <560f8a72-d7c3-af80-bfb2-231b37eb8e6e@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:44:17.193Z
+========================================
+Context: Email sent successfully
+Email To: jw0831@gmail.com
+Email Subject: 📋 정보보호사무국 6월 시행 예정 법규 안내
+Message ID: <13e2ff67-b152-bf58-417e-04406d97c1d9@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:44:21.013Z
+========================================
+Context: Email sent successfully
+Email To: jw0831@gmail.com
+Email Subject: 📋 회계세무그룹 6월 시행 예정 법규 안내
+Message ID: <3835b2c8-4c24-a19b-fd02-84bf4691e527@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:46:00.877Z
+========================================
+Context: Email sent successfully
+Email To: jw0831@gmail.com
+Email Subject: 📋 정보보호사무국 6월 시행 예정 법규 안내
+Message ID: <d3b1344c-4f9e-3a0f-7f7c-66db3f0f1ab9@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:46:05.027Z
+========================================
+Context: Email sent successfully
+Email To: jw0831@gmail.com
+Email Subject: 📋 회계세무그룹 6월 시행 예정 법규 안내
+Message ID: <e396f4aa-8f88-0468-b0e6-fd3b5746dd61@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:47:32.991Z
+========================================
+Context: Email sent successfully
+Email To: jw0831@gmail.com
+Email Subject: 📋 정보보호사무국 6월 시행 예정 법규 안내
+Message ID: <f2cc86d7-432d-c8ea-281e-906054cd29d8@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:47:36.306Z
+========================================
+Context: Email sent successfully
+Email To: jw0831@gmail.com
+Email Subject: 📋 회계세무그룹 6월 시행 예정 법규 안내
+Message ID: <612e7950-e0f3-272e-2b01-8b7c3c3075d5@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:49:14.135Z
+========================================
+Context: Email sent successfully
+Email To: jw0831@gmail.com
+Email Subject: 📋 정보보호사무국 6월 시행 예정 법규 안내
+Message ID: <f12165be-2b1c-dc1b-5221-4989a983b334@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:50:05.048Z
+========================================
+Context: Email sent successfully
+Email To: tbvjakrso@naver.com
+Email Subject: 📋 정보보호사무국 6월 시행 예정 법규 안내
+Message ID: <d4447b99-4c7f-4121-8bb6-31c4a151c2bb@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T01:50:10.451Z
+========================================
+Context: Email sent successfully
+Email To: tbvjakrso@naver.com
+Email Subject: 📋 회계세무그룹 6월 시행 예정 법규 안내
+Message ID: <76a0ce17-d425-34c0-c68b-7e7e4353b554@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+

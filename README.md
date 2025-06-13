@@ -1,4 +1,11 @@
 # lip_service
+
+![](./figures/main_1.png)
+![](./figures/main_2.png)
+![](./figures/sub_1.png)
+![](./figures/admin_1.png)
+![](./figures/mail_1.png)
+
 # 0️⃣ 오프닝
 
 <aside>

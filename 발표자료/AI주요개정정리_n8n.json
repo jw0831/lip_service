@@ -1,0 +1,268 @@
+{
+  "name": "AI_제개정내용_분석",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9f9958a8-a12c-4542-b8eb-2ab8e8015492",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/data/my_db/*_crawled_n8n.xlsx",
+        "options": {
+          "fileExtension": "xlsx"
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "id": "c554c36f-1519-41e6-a718-5570cc631d84",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {
+          "range": ""
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "id": "c4cc2e21-70c0-4378-9dfb-a8da8d67d458",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "[\"주요 개정 내용\"]",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        660,
+        80
+      ],
+      "id": "5c0f8613-f543-4f9a-be4f-b379ee11f0f6",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1480,
+        0
+      ],
+      "id": "daddd100-4c9b-4c7f-80db-113a8326e794",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ffbc719e-412a-4e47-b788-0853c2a5655c",
+              "name": "AI 주요 개정 정리",
+              "value": "={{ $json.message.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1260,
+        80
+      ],
+      "id": "b9360ee9-6fe8-4a7c-b589-043f0c40ca0c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=당신은 법률 문서 분석 전문가입니다. 제공된 【제정·개정이유】 텍스트에서 핵심 내용을 추출하여, 직원들이 쉽게 파악할 수 있도록 간결하고 명확하게 정리해주세요.\n\n요구사항:\n1. **개정이유**: \"개정이유\", \"제정이유\" 또는 유사한 제목 하의 내용을 1-2문장으로 요약. 해당 섹션이 없으면 \"없음\"으로 표시.\n2. **주요내용**: \"주요내용\" 또는 유사한 제목 하의 항목들을 각 항목당 한 줄로 간단히 정리. 항목이 번호(가, 나, 다 등)나 기호로 구분되지 않을 경우, 문단을 자연스럽게 핵심 문장으로 분리.\n3. 전문 용어는 유지하고, 불필요한 세부 설명은 생략.\n4. 결과는 아래 형식으로 작성하되, 형식이 달라질 경우 적응적으로 조정:\n   - [개정이유]: [요약 내용]\n   \n   - [주요내용]:\n     - [항목별 정리 내용]\n5. 텍스트에 개정이유나 주요내용이 명시적으로 구분되지 않은 경우, 전체 내용에서 핵심만 추출해 적절히 분류.\n\n다음은 분석할 텍스트입니다:\n<【제정·개정이유】>\n{{ $json['[\"주요 개정 내용\"]'] }}\n</【제정·개정이유】>"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        880,
+        80
+      ],
+      "id": "11240a76-11c9-4090-94f3-3cb3272a1d06",
+      "name": "AI 주요 개정 정리",
+      "executeOnce": false,
+      "credentials": {
+        "openAiApi": {
+          "id": "AgXLGhKx6iSUvNrr",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/data/my_db/ai_summary_output_openai4dot1.xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        1920,
+        0
+      ],
+      "id": "2832e273-f08e-4fde-88b8-0364d4e5504d",
+      "name": "Read/Write Files from Disk1"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1700,
+        0
+      ],
+      "id": "0af35777-d33c-41aa-b10a-c36d453f5a14",
+      "name": "Convert to File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "AI 주요 개정 정리",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "AI 주요 개정 정리": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bb09f172-e357-43c9-b876-054d665a1088",
+  "meta": {
+    "instanceId": "e3bad0afe208dabd75bf117f67caef7a75a2a87daa3f260e7b878938b522d759"
+  },
+  "id": "7xtoKuqANL3kRomG",
+  "tags": []
+}

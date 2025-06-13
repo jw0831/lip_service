@@ -25,6 +25,34 @@ import { formatDate, formatDateTime, getDepartmentColor, getStatusColor, getPrio
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
+// 마크다운을 HTML로 변환하는 함수
+function convertMarkdownToHtml(text: string): string {
+  if (!text) return text;
+  
+  return text
+    // 헤더 변환 (# ## ###) - 대괄호 제거
+    .replace(/^\[### (.+)\]$/gm, '<h3 class="text-base font-semibold text-slate-700 mt-3 mb-1">$1</h3>')
+    .replace(/^\[## (.+)\]$/gm, '<h2 class="text-lg font-bold text-slate-800 mt-4 mb-2">$1</h2>')
+    .replace(/^\[# (.+)\]$/gm, '<h1 class="text-xl font-bold text-slate-900 mt-4 mb-2">$1</h1>')
+    // 기본 헤더 (대괄호 없는 경우)
+    .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold text-slate-700 mt-3 mb-1">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 class="text-lg font-bold text-slate-800 mt-4 mb-2">$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold text-slate-900 mt-4 mb-2">$1</h1>')
+    // 볼드 텍스트 변환 (**text**)
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-slate-700">$1</strong>')
+    // 번호 목록 변환
+    .replace(/^(\d+)\.\s(.+)$/gm, '<div class="ml-4 my-1"><strong class="text-slate-800">$1.</strong> $2</div>')
+    // 여러 연속 줄바꿈을 단일 줄바꿈으로 변환
+    .replace(/\n{3,}/g, '\n\n')
+    // 줄바꿈 처리를 더 자연스럽게
+    .replace(/\n\n/g, '</p><p class="mt-3">')
+    .replace(/\n/g, ' ')
+    // 전체를 p 태그로 감싸기
+    .replace(/^(.+)$/, '<p>$1</p>')
+    // 빈 p 태그 제거
+    .replace(/<p><\/p>/g, '');
+}
+
 interface DashboardStats {
   totalRegulations: number;
   totalDepartments: number;
@@ -279,6 +307,9 @@ export default function Dashboard() {
                           "법무실": "bg-red-500",
                           "노사협력그룹": "bg-yellow-500",
                           "윤리경영사무국": "bg-pink-500",
+                          "IP전략센터": "bg-cyan-500",
+                          "경영전략그룹": "bg-emerald-500",
+                          "내부회계관리섹션": "bg-violet-500",
                         };
                         return colors[deptName as keyof typeof colors] || "bg-gray-500";
                       };
@@ -293,6 +324,9 @@ export default function Dashboard() {
                           "법무실": "법무실",
                           "노사협력그룹": "노사협력그룹",
                           "윤리경영사무국": "윤리경영사무국",
+                          "IP전략센터": "IP전략센터",
+                          "경영전략그룹": "경영전략그룹",
+                          "내부회계관리섹션": "내부회계관리섹션",
                         };
                         return nameMap[deptName] || deptName;
                       };
@@ -570,9 +604,12 @@ export default function Dashboard() {
                              regulation['개정 법률 조항'] !== 'None' && (
                               <div className="mt-3 p-3 bg-blue-50 rounded">
                                 <p className="text-sm font-medium text-blue-900 mb-1">개정 법률 조항</p>
-                                <p className="text-sm text-blue-800 whitespace-pre-line">
-                                  {regulation['개정 법률 조항']}
-                                </p>
+                                <div 
+                                  className="text-sm text-blue-800 leading-relaxed"
+                                  dangerouslySetInnerHTML={{ 
+                                    __html: convertMarkdownToHtml(regulation['개정 법률 조항']) 
+                                  }}
+                                />
                               </div>
                             )}
 
@@ -580,9 +617,12 @@ export default function Dashboard() {
                              regulation['AI 후속 조치 사항'] !== '내용/조치사항 없음' && (
                               <div className="mt-3 p-3 bg-green-50 rounded">
                                 <p className="text-sm font-medium text-green-900 mb-1">AI 후속 조치 사항</p>
-                                <p className="text-sm text-green-800 whitespace-pre-line">
-                                  {regulation['AI 후속 조치 사항']}
-                                </p>
+                                <div 
+                                  className="text-sm text-green-800 leading-relaxed"
+                                  dangerouslySetInnerHTML={{ 
+                                    __html: convertMarkdownToHtml(regulation['AI 후속 조치 사항']) 
+                                  }}
+                                />
                               </div>
                             )}
                           </div>

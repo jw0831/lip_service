@@ -3,6 +3,36 @@ import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
 
+// 마크다운을 HTML로 변환하는 함수 (대시보드와 동일한 로직, 인라인 스타일)
+function convertMarkdownToHtml(text: string): string {
+  if (!text) return text;
+  
+  return text
+    // 헤더 변환 (# ## ###) - 대괄호 제거
+    .replace(/^\[### (.+)\]$/gm, '<h3 style="font-size: 16px; font-weight: 600; color: #374151; margin: 12px 0 4px 0;">$1</h3>')
+    .replace(/^\[## (.+)\]$/gm, '<h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin: 16px 0 8px 0;">$1</h2>')
+    .replace(/^\[# (.+)\]$/gm, '<h1 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 16px 0 8px 0;">$1</h1>')
+    // 기본 헤더 (대괄호 없는 경우)
+    .replace(/^### (.+)$/gm, '<h3 style="font-size: 16px; font-weight: 600; color: #374151; margin: 12px 0 4px 0;">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 style="font-size: 18px; font-weight: 700; color: #1e293b; margin: 16px 0 8px 0;">$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 16px 0 8px 0;">$1</h1>')
+    // 볼드 텍스트 변환 (**text**)
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight: 600; color: #374151;">$1</strong>')
+    // 번호 목록 변환
+    .replace(/^(\d+)\.\s(.+)$/gm, '<div style="margin-left: 16px; margin: 4px 0;"><strong style="color: #1e293b;">$1.</strong> $2</div>')
+    // 여러 연속 줄바꿈을 단일 줄바꿈으로 변환
+    .replace(/\n{3,}/g, '\n\n')
+    // 줄바꿈 처리를 더 자연스럽게
+    .replace(/\n\n/g, '</p><p style="margin-top: 12px;">')
+    .replace(/\n/g, ' ')
+    // 전체를 p 태그로 감싸기
+    .replace(/^(.+)$/, '<p>$1</p>')
+    // 빈 p 태그 제거
+    .replace(/<p><\/p>/g, '');
+}
+
+
+
 // Logging utility for email errors
 const logEmailError = (error: any, context: string, params?: any) => {
   const timestamp = new Date().toISOString();
@@ -476,8 +506,8 @@ export async function sendMonthlyUpcomingRegulationsEmail(
              regulation['개정 법률 조항'] !== 'None' ? `
               <div style="background: #dbeafe; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
                 <p style="margin: 0 0 8px 0; font-weight: 600; color: #1e40af;">💡 개정 법률 조항</p>
-                <div style="color: #1e40af; white-space: pre-line; font-size: 14px;">
-                  ${regulation['개정 법률 조항']}
+                <div style="font-size: 14px; line-height: 1.6;">
+                  ${convertMarkdownToHtml(regulation['개정 법률 조항'])}
                 </div>
               </div>
             ` : ''}
@@ -486,8 +516,8 @@ export async function sendMonthlyUpcomingRegulationsEmail(
              regulation['AI 후속 조치 사항'] !== '내용/조치사항 없음' ? `
               <div style="background: #dcfce7; padding: 15px; border-radius: 6px;">
                 <p style="margin: 0 0 8px 0; font-weight: 600; color: #15803d;">📋 AI 후속 조치 사항</p>
-                <div style="color: #15803d; white-space: pre-line; font-size: 14px;">
-                  ${regulation['AI 후속 조치 사항']}
+                <div style="font-size: 14px; line-height: 1.6;">
+                  ${convertMarkdownToHtml(regulation['AI 후속 조치 사항'])}
                 </div>
               </div>
             ` : ''}
@@ -520,6 +550,9 @@ export async function sendMonthlyUpcomingRegulationsEmail(
     "법무실": "legal@company.com",
     "노사협력그룹": "labor@company.com",
     "윤리경영사무국": "ethics@company.com",
+    "IP전략센터": "ip@company.com",
+    "경영전략그룹": "strategy@company.com",
+    "내부회계관리섹션": "accounting@company.com",
   };
 
   const recipientEmail = departmentEmails[departmentName] || "admin@company.com";

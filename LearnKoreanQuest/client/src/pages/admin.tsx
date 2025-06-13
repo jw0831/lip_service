@@ -84,6 +84,9 @@ export default function Admin() {
         { department: "법무실", email: "" },
         { department: "노사협력그룹", email: "" },
         { department: "윤리경영사무국", email: "" },
+        { department: "IP전략센터", email: "" },
+        { department: "경영전략그룹", email: "" },
+        { department: "내부회계관리섹션", email: "" },
       ],
     },
   });

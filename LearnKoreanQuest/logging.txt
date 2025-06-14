@@ -1473,3 +1473,14 @@ Message ID: <c54ff9aa-b8c1-28db-5b9b-5b8a0edd07a5@hufs-gsuite.kr>
 Service Used: Gmail
 ========================================
 
+
+========================================
+EMAIL SUCCESS LOG - 2025-06-13T06:20:43.442Z
+========================================
+Context: Email sent successfully
+Email To: jinwon0831kim@naver.com
+Email Subject: 📋 정보보호사무국 6월 시행 예정 법규 안내
+Message ID: <fac0dca7-187f-57ee-e12d-b72e9838baec@hufs-gsuite.kr>
+Service Used: Gmail
+========================================
+

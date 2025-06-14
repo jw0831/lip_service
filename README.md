@@ -203,7 +203,7 @@
 
 ---
 
-![image.png](attachment:79f5c5a1-3376-4209-bc1d-984a992f82e3:image.png)
+![](./figures/solution_claim.png)
 
 ### **1. 부서 선택**
 
